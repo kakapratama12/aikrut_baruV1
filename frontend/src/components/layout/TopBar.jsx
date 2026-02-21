@@ -16,7 +16,7 @@ export const TopBar = ({ title, subtitle }) => {
     : 'U';
 
   return (
-    <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-8" data-testid="topbar">
+    <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-30" data-testid="topbar">
       <div>
         <h1 className="font-heading font-semibold text-xl text-slate-900">{title}</h1>
         {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}

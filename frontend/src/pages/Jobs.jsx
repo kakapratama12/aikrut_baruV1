@@ -86,12 +86,12 @@ export const Jobs = () => {
             {jobs.map((job, index) => (
               <Card
                 key={job.id}
-                className="border-slate-100 shadow-soft hover:shadow-soft-md hover:border-indigo-200 transition-all cursor-pointer animate-slide-up"
+                className="border-slate-100 shadow-soft hover:shadow-soft-md hover:border-indigo-200 transition-all cursor-pointer animate-slide-up h-full"
                 style={{ animationDelay: `${index * 0.05}s` }}
                 onClick={() => navigate(`/jobs/${job.id}`)}
                 data-testid={`job-card-${job.id}`}
               >
-                <CardContent className="p-6">
+                <CardContent className="p-6 flex flex-col h-full">
                   <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 rounded-xl bg-indigo-50 flex items-center justify-center">
                       <Briefcase className="w-6 h-6 text-indigo-500" />
@@ -118,7 +118,7 @@ export const Jobs = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 border-t border-slate-100">
+                  <div className="flex items-center justify-between pt-4 border-t border-slate-100 mt-auto">
                     <span className={`text-xs ${job.playbook ? 'text-green-600' : 'text-amber-600'}`}>
                       {job.playbook ? '✓ Playbook ready' : '! Needs playbook'}
                     </span>
