@@ -5,6 +5,17 @@ All notable changes to the Aikrut platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (currently in `v0.x` pre-release phase).
 
+## [v0.1.1-alpha] - 2026-02-21
+
+### Added
+- **Job Deletion**: Added a delete button (trash icon) on each job card in the Job Vacancies list, with a confirmation dialog to prevent accidental deletions.
+
+### Changed
+- **Credit Indicator**: Replaced the misleading `$` (DollarSign) icon in the TopBar with a neutral `Coins` token icon to clarify that credits are not real currency.
+
+### Fixed
+- **Job List Crash**: Fixed a Pydantic validation error that caused the `/jobs` API to return 500 when legacy jobs with string-based descriptions existed in the database. The schema now accepts both `dict` and `str` formats for backwards compatibility.
+
 ## [v0.1.0-alpha] - 2026-02-21
 
 ### Added

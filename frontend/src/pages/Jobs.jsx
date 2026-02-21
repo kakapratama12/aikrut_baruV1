@@ -4,8 +4,9 @@ import { TopBar } from '../components/layout/TopBar';
 import { Card, CardContent } from '../components/ui/card';
 import { Button } from '../components/ui/button';
 import { jobsAPI } from '../lib/api';
-import { Briefcase, Plus, MapPin, Clock, ChevronRight } from 'lucide-react';
+import { Briefcase, Plus, MapPin, Clock, ChevronRight, Trash2 } from 'lucide-react';
 import { EmptyState } from '../components/common/EmptyState';
+import { toast } from 'sonner';
 
 export const Jobs = () => {
   const [jobs, setJobs] = useState([]);
@@ -27,6 +28,22 @@ export const Jobs = () => {
     }
   };
 
+  const handleDeleteJob = async (e, id, title) => {
+    e.stopPropagation(); // Prevent navigating to job details
+    if (!window.confirm(`Are you sure you want to delete "${title}"? This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await jobsAPI.delete(id);
+      setJobs(prev => prev.filter(job => job.id !== id));
+      toast.success('Job deleted successfully');
+    } catch (error) {
+      console.error('Failed to delete job:', error);
+      toast.error('Failed to delete job');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -38,7 +55,7 @@ export const Jobs = () => {
   return (
     <div className="min-h-screen" data-testid="jobs-page">
       <TopBar title="Job Vacancies" subtitle="Manage open positions" />
-      
+
       <div className="p-8">
         <div className="flex justify-between items-center mb-6">
           <div>
@@ -83,11 +100,11 @@ export const Jobs = () => {
                       {job.status}
                     </span>
                   </div>
-                  
+
                   <h3 className="font-heading font-semibold text-lg text-slate-900 mb-2">
                     {job.title}
                   </h3>
-                  
+
                   <div className="space-y-2 mb-4">
                     {job.location && (
                       <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -100,12 +117,24 @@ export const Jobs = () => {
                       {job.employment_type}
                     </div>
                   </div>
-                  
+
                   <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                     <span className={`text-xs ${job.playbook ? 'text-green-600' : 'text-amber-600'}`}>
                       {job.playbook ? '✓ Playbook ready' : '! Needs playbook'}
                     </span>
-                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                        onClick={(e) => handleDeleteJob(e, job.id, job.title)}
+                        data-testid={`delete-job-${job.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                    </div>
                   </div>
                 </CardContent>
               </Card>
