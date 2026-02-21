@@ -262,73 +262,73 @@ export const Company = () => {
                   Add Value
                 </Button>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-6">
                 {form.values.length === 0 ? (
                   <p className="text-sm text-slate-500 text-center py-8">
                     No values defined. Add manually or use AI generator.
                   </p>
                 ) : (
                   <>
-                    {form.values.map((value, index) => (
-                      <div key={value.id} className="p-4 rounded-xl bg-slate-50 space-y-3">
-                        <div className="flex items-start gap-4">
-                          <div className="flex-1 space-y-3">
-                            <Input
-                              value={value.name}
-                              onChange={(e) => updateValue(value.id, 'name', e.target.value)}
-                              placeholder="Value name"
-                              className="font-medium"
-                              data-testid={`value-name-${index}`}
-                            />
-                            <Textarea
-                              value={value.description}
-                              onChange={(e) => updateValue(value.id, 'description', e.target.value)}
-                              placeholder="Description"
-                              rows={2}
-                              data-testid={`value-desc-${index}`}
-                            />
-                            <div className="flex items-center gap-4">
-                              <Label className="text-sm text-slate-500 w-20">Weight:</Label>
-                              <Slider
-                                value={[value.weight || 0]}
-                                onValueChange={([v]) => updateValue(value.id, 'weight', v)}
-                                max={100}
-                                step={1}
-                                className="flex-1"
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                      {form.values.map((value, index) => (
+                        <div key={value.id} className="p-4 rounded-xl bg-slate-50 flex flex-col h-full">
+                          <div className="flex items-start gap-4 flex-1">
+                            <div className="flex-1 space-y-3 flex flex-col h-full">
+                              <Input
+                                value={value.name}
+                                onChange={(e) => updateValue(value.id, 'name', e.target.value)}
+                                placeholder="Value name"
+                                className="font-medium"
+                                data-testid={`value-name-${index}`}
                               />
-                              <div className="flex items-center gap-1 w-24">
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  max="100"
-                                  value={value.weight === 0 ? '' : value.weight}
-                                  onChange={(e) => {
-                                    let v = parseInt(e.target.value, 10);
-                                    if (isNaN(v)) v = 0;
-                                    if (v > 100) v = 100;
-                                    if (v < 0) v = 0;
-                                    updateValue(value.id, 'weight', v);
-                                  }}
-                                  className="h-8 px-2 text-right font-medium"
+                              <Textarea
+                                value={value.description}
+                                onChange={(e) => updateValue(value.id, 'description', e.target.value)}
+                                placeholder="Description"
+                                rows={2}
+                                data-testid={`value-desc-${index}`}
+                              />
+                              <div className="flex items-center gap-4 mt-auto pt-2">
+                                <Label className="text-sm text-slate-500 w-16">Weight:</Label>
+                                <Slider
+                                  value={[value.weight || 0]}
+                                  onValueChange={([v]) => updateValue(value.id, 'weight', v)}
+                                  max={100}
+                                  step={1}
+                                  className="flex-1"
                                 />
-                                <span className="text-sm font-medium text-slate-500">%</span>
+                                <div className="flex items-center gap-1 w-20">
+                                  <Input
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={value.weight === 0 ? '' : value.weight}
+                                    onChange={(e) => {
+                                      let v = parseInt(e.target.value, 10);
+                                      if (isNaN(v)) v = 0;
+                                      if (v > 100) v = 100;
+                                      if (v < 0) v = 0;
+                                      updateValue(value.id, 'weight', v);
+                                    }}
+                                    className="h-8 px-2 text-right font-medium"
+                                  />
+                                  <span className="text-sm font-medium text-slate-500">%</span>
+                                </div>
                               </div>
                             </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeValue(value.id)}
+                              className="text-slate-400 hover:text-red-500"
+                              data-testid={`remove-value-${index}`}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeValue(value.id)}
-                            className="text-slate-400 hover:text-red-500"
-                            data-testid={`remove-value-${index}`}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
                         </div>
-                      </div>
-                    ))}
-
-                    {/* Weight Validation */}
+                      ))}
+                    </div>                {/* Weight Validation */}
                     <div className={`flex items-center justify-between p-3 rounded-lg ${isWeightValid ? 'bg-green-50' : 'bg-red-50'}`}>
                       <span className={`text-sm ${isWeightValid ? 'text-green-700' : 'text-red-700'}`}>
                         Total Weight: {totalWeight.toFixed(0)}%
@@ -366,6 +366,6 @@ export const Company = () => {
           </Button>
         </div>
       </div>
-    </div>
+    </div >
   );
 };

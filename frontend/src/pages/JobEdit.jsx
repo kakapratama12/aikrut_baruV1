@@ -455,8 +455,8 @@ export const JobEdit = () => {
                     </Button>
                   </div>
 
-                  <div className="space-y-4 pl-4 border-l-2 border-indigo-100">
-                    <div className="space-y-2">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pl-4 border-l-2 border-indigo-100">
+                    <div className="space-y-2 lg:col-span-2">
                       <Label htmlFor="about_the_role">About the Role *</Label>
                       <Textarea
                         id="about_the_role"
@@ -473,7 +473,7 @@ export const JobEdit = () => {
                         value={form.description.key_responsibilities}
                         onChange={(e) => updateNestedField('description', 'key_responsibilities', e.target.value)}
                         placeholder="Detail the daily impact. Start with numbers (1., 2.) for main points..."
-                        rows={4}
+                        rows={5}
                       />
                     </div>
                     <div className="space-y-2">
@@ -483,7 +483,7 @@ export const JobEdit = () => {
                         value={form.description.what_you_will_do}
                         onChange={(e) => updateNestedField('description', 'what_you_will_do', e.target.value)}
                         placeholder="Narrative sentences followed by detailed bullet points..."
-                        rows={4}
+                        rows={5}
                       />
                     </div>
                   </div>
@@ -495,7 +495,7 @@ export const JobEdit = () => {
                     <p className="text-sm text-slate-500">Specify what success looks like for candidates.</p>
                   </div>
 
-                  <div className="space-y-4 pl-4 border-l-2 border-purple-100">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pl-4 border-l-2 border-purple-100">
                     <div className="space-y-2">
                       <Label htmlFor="required_experience">Required Experience</Label>
                       <Textarea
@@ -503,7 +503,7 @@ export const JobEdit = () => {
                         value={form.requirements.required_experience}
                         onChange={(e) => updateNestedField('requirements', 'required_experience', e.target.value)}
                         placeholder="Years of experience, specific industries, or past roles..."
-                        rows={3}
+                        rows={4}
                       />
                     </div>
                     <div className="space-y-2">
@@ -513,27 +513,27 @@ export const JobEdit = () => {
                         value={form.requirements.required_skills}
                         onChange={(e) => updateNestedField('requirements', 'required_skills', e.target.value)}
                         placeholder="Technical tools, methodologies, or hard skills required..."
-                        rows={3}
+                        rows={4}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-slate-700">
                       <Label htmlFor="qualifications">Qualifications</Label>
                       <Textarea
                         id="qualifications"
                         value={form.requirements.qualifications}
                         onChange={(e) => updateNestedField('requirements', 'qualifications', e.target.value)}
                         placeholder="Degrees, certifications, or educational background..."
-                        rows={2}
+                        rows={3}
                       />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2 text-slate-700">
                       <Label htmlFor="nice_to_have">Nice-to-haves</Label>
                       <Textarea
                         id="nice_to_have"
                         value={form.requirements.nice_to_have}
                         onChange={(e) => updateNestedField('requirements', 'nice_to_have', e.target.value)}
                         placeholder="Bonus skills or experiences that would make a candidate stand out..."
-                        rows={2}
+                        rows={3}
                       />
                     </div>
                   </div>
