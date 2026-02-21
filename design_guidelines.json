@@ -1,0 +1,180 @@
+{
+  "design_system": {
+    "identity": {
+      "name": "TalentAI",
+      "tone": "Professional, Approachable, Human-Centered, Efficient",
+      "aesthetic": "Soft Pastel SaaS, Clean, Airy, Modern",
+      "theme_mode": "light"
+    },
+    "typography": {
+      "font_family": {
+        "headings": "Plus Jakarta Sans, sans-serif",
+        "body": "Manrope, sans-serif",
+        "mono": "JetBrains Mono, monospace"
+      },
+      "scale": {
+        "h1": "text-4xl font-bold tracking-tight",
+        "h2": "text-3xl font-semibold tracking-tight",
+        "h3": "text-2xl font-semibold",
+        "h4": "text-xl font-medium",
+        "body_lg": "text-lg leading-relaxed",
+        "body_base": "text-base leading-relaxed text-slate-600",
+        "body_sm": "text-sm text-slate-500",
+        "caption": "text-xs text-slate-400 uppercase tracking-wider"
+      }
+    },
+    "colors": {
+      "primary": {
+        "DEFAULT": "#6366f1",
+        "foreground": "#ffffff",
+        "50": "#eef2ff",
+        "100": "#e0e7ff",
+        "200": "#c7d2fe",
+        "300": "#a5b4fc",
+        "400": "#818cf8",
+        "500": "#6366f1",
+        "600": "#4f46e5",
+        "700": "#4338ca",
+        "800": "#3730a3",
+        "900": "#312e81"
+      },
+      "secondary": {
+        "DEFAULT": "#f1f5f9",
+        "foreground": "#0f172a"
+      },
+      "background": {
+        "DEFAULT": "#f8fafc",
+        "paper": "#ffffff"
+      },
+      "status": {
+        "success": {
+          "bg": "#dcfce7",
+          "text": "#166534"
+        },
+        "warning": {
+          "bg": "#fef9c3",
+          "text": "#854d0e"
+        },
+        "error": {
+          "bg": "#fee2e2",
+          "text": "#991b1b"
+        },
+        "info": {
+          "bg": "#e0f2fe",
+          "text": "#075985"
+        }
+      },
+      "border": "#e2e8f0",
+      "muted": "#64748b"
+    },
+    "spacing": {
+      "container_padding": "p-6 md:p-8 lg:p-10",
+      "section_gap": "gap-6 md:gap-8",
+      "card_padding": "p-6"
+    },
+    "layout": {
+      "radius": {
+        "default": "rounded-xl",
+        "card": "rounded-2xl",
+        "button": "rounded-full"
+      },
+      "shadows": {
+        "card": "shadow-sm hover:shadow-md transition-shadow duration-200",
+        "dropdown": "shadow-lg ring-1 ring-black/5",
+        "subtle": "shadow-[0_2px_10px_rgba(0,0,0,0.03)]"
+      }
+    },
+    "components": {
+      "buttons": {
+        "primary": "bg-primary text-white hover:bg-primary/90 shadow-sm rounded-full px-6 py-2 font-medium transition-all active:scale-95",
+        "secondary": "bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-full px-6 py-2 font-medium transition-all active:scale-95",
+        "ghost": "text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-full px-4 py-2 transition-all",
+        "destructive": "bg-red-50 text-red-600 hover:bg-red-100 rounded-full px-6 py-2 font-medium transition-all"
+      },
+      "cards": {
+        "base": "bg-white rounded-2xl border border-slate-100 shadow-sm p-6",
+        "interactive": "bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-md hover:border-primary/20 transition-all cursor-pointer"
+      },
+      "inputs": {
+        "base": "flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+      },
+      "badges": {
+        "base": "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
+        "success": "border-transparent bg-green-100 text-green-800 hover:bg-green-200",
+        "warning": "border-transparent bg-yellow-100 text-yellow-800 hover:bg-yellow-200",
+        "error": "border-transparent bg-red-100 text-red-800 hover:bg-red-200",
+        "neutral": "border-transparent bg-slate-100 text-slate-800 hover:bg-slate-200"
+      }
+    }
+  },
+  "assets": {
+    "images": {
+      "landing_hero": {
+        "url": "https://images.pexels.com/photos/8068836/pexels-photo-8068836.jpeg",
+        "alt": "Diverse team collaborating in a modern office",
+        "usage": "Landing page hero section background or side image"
+      },
+      "recruiter_dashboard": {
+        "url": "https://images.pexels.com/photos/5989933/pexels-photo-5989933.jpeg",
+        "alt": "HR professional reviewing candidate profiles on a laptop",
+        "usage": "Feature section showing the dashboard in use"
+      },
+      "abstract_bg": {
+        "url": "https://images.pexels.com/photos/7307567/pexels-photo-7307567.jpeg",
+        "alt": "Soft pastel abstract shapes",
+        "usage": "Background for authentication pages or empty states"
+      },
+      "team_meeting": {
+        "url": "https://images.pexels.com/photos/8117479/pexels-photo-8117479.jpeg",
+        "alt": "Team meeting in a bright office",
+        "usage": "About us or team section"
+      }
+    },
+    "icons": {
+      "library": "lucide-react",
+      "style": "Stroke width 1.5px, rounded joins",
+      "usage": "Use for navigation, actions, and status indicators"
+    }
+  },
+  "pages": {
+    "dashboard": {
+      "layout": "Sidebar + Topbar + Content Area",
+      "widgets": [
+        "KPI Cards (Total Candidates, Open Jobs, Avg Time to Hire)",
+        "Recent Activity Feed",
+        "Upcoming Interviews List",
+        "Candidate Pipeline Chart (Bar or Funnel)"
+      ]
+    },
+    "job_fit_analysis": {
+      "layout": "Full width table with expandable rows",
+      "features": [
+        "Batch selection of candidates",
+        "AI Score column with color-coded ring (0-100)",
+        "Explainability tooltip/modal on hover",
+        "Filter sidebar (Skills, Experience, Location)"
+      ]
+    },
+    "company_settings": {
+      "layout": "Tabs (General, Values, Team)",
+      "features": [
+        "Value configuration with weight sliders",
+        "Company branding upload",
+        "Team member management"
+      ]
+    }
+  },
+  "universal_guidelines": [
+    "Use 'Plus Jakarta Sans' for all headings to give a modern, friendly feel.",
+    "Use 'Manrope' for body text for high legibility.",
+    "Maintain a 'Light & Airy' feel. Avoid heavy dark backgrounds. Use white cards on light gray/blue backgrounds.",
+    "Use soft shadows (shadow-sm, shadow-md) to create depth without harshness.",
+    "Interactive elements should have clear hover states (slight color shift or lift).",
+    "Status indicators must use the defined pastel palette (bg-green-100 text-green-800) for accessibility and softness.",
+    "All charts should use the pastel color palette defined in tailwind config.",
+    "Do not use pure black (#000000). Use Slate-900 (#0f172a) for text.",
+    "Ensure all interactive elements have data-testid attributes for testing.",
+    "Use 'sonner' for all toast notifications.",
+    "For empty states, use the abstract pastel background image with a centered message and action button."
+  ]
+}

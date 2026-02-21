@@ -1,0 +1,173 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+    :root {
+        --background: 210 40% 98%;
+        --foreground: 222 47% 11%;
+        --card: 0 0% 100%;
+        --card-foreground: 222 47% 11%;
+        --popover: 0 0% 100%;
+        --popover-foreground: 222 47% 11%;
+        --primary: 239 84% 67%;
+        --primary-foreground: 0 0% 100%;
+        --secondary: 210 40% 96%;
+        --secondary-foreground: 222 47% 11%;
+        --muted: 210 40% 96%;
+        --muted-foreground: 215 16% 47%;
+        --accent: 210 40% 96%;
+        --accent-foreground: 222 47% 11%;
+        --destructive: 0 84% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 214 32% 91%;
+        --input: 214 32% 91%;
+        --ring: 239 84% 67%;
+        --radius: 0.75rem;
+        
+        --chart-1: 239 84% 67%;
+        --chart-2: 142 71% 45%;
+        --chart-3: 38 92% 50%;
+        --chart-4: 0 84% 60%;
+        --chart-5: 262 83% 58%;
+        
+        --success-bg: 142 76% 94%;
+        --success-text: 142 71% 29%;
+        --warning-bg: 48 96% 89%;
+        --warning-text: 25 95% 30%;
+        --error-bg: 0 93% 94%;
+        --error-text: 0 72% 38%;
+        --info-bg: 199 89% 94%;
+        --info-text: 199 89% 30%;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    
+    html {
+        font-family: 'Manrope', sans-serif;
+    }
+    
+    body {
+        @apply bg-background text-foreground antialiased;
+    }
+    
+    h1, h2, h3, h4, h5, h6 {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+}
+
+@layer components {
+    .card-base {
+        @apply bg-white rounded-2xl border border-slate-100 shadow-sm p-6;
+    }
+    
+    .card-interactive {
+        @apply bg-white rounded-2xl border border-slate-100 shadow-sm p-6 hover:shadow-md hover:border-indigo-200 transition-all cursor-pointer;
+    }
+    
+    .btn-primary {
+        @apply bg-indigo-500 text-white hover:bg-indigo-600 shadow-sm rounded-full px-6 py-2 font-medium transition-all active:scale-95;
+    }
+    
+    .btn-secondary {
+        @apply bg-white text-slate-700 border border-slate-200 hover:bg-slate-50 hover:text-slate-900 rounded-full px-6 py-2 font-medium transition-all active:scale-95;
+    }
+    
+    .btn-ghost {
+        @apply text-slate-600 hover:bg-slate-100 hover:text-slate-900 rounded-full px-4 py-2 transition-all;
+    }
+    
+    .badge-success {
+        @apply inline-flex items-center rounded-full border-transparent bg-green-100 text-green-800 px-2.5 py-0.5 text-xs font-semibold;
+    }
+    
+    .badge-warning {
+        @apply inline-flex items-center rounded-full border-transparent bg-yellow-100 text-yellow-800 px-2.5 py-0.5 text-xs font-semibold;
+    }
+    
+    .badge-error {
+        @apply inline-flex items-center rounded-full border-transparent bg-red-100 text-red-800 px-2.5 py-0.5 text-xs font-semibold;
+    }
+    
+    .badge-neutral {
+        @apply inline-flex items-center rounded-full border-transparent bg-slate-100 text-slate-800 px-2.5 py-0.5 text-xs font-semibold;
+    }
+    
+    .input-base {
+        @apply flex h-10 w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+    }
+    
+    .score-ring {
+        @apply relative inline-flex items-center justify-center;
+    }
+    
+    .score-ring svg {
+        transform: rotate(-90deg);
+    }
+}
+
+@layer utilities {
+    .text-balance {
+        text-wrap: balance;
+    }
+    
+    .scrollbar-thin {
+        scrollbar-width: thin;
+        scrollbar-color: hsl(var(--muted)) transparent;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    
+    .scrollbar-thin::-webkit-scrollbar-thumb {
+        background-color: hsl(var(--muted));
+        border-radius: 3px;
+    }
+}
+
+/* Animation utilities */
+@keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slide-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-in-right {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+    animation: slide-up 0.4s ease-out;
+}
+
+.animate-slide-in-right {
+    animation: slide-in-right 0.3s ease-out;
+}
+
+/* Staggered animation delays */
+.stagger-1 { animation-delay: 0.05s; }
+.stagger-2 { animation-delay: 0.1s; }
+.stagger-3 { animation-delay: 0.15s; }
+.stagger-4 { animation-delay: 0.2s; }
+.stagger-5 { animation-delay: 0.25s; }

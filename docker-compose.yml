@@ -1,0 +1,72 @@
+# =============================================================
+# Aikrut - Docker Compose Configuration
+# =============================================================
+# Usage:
+#   Local dev:  docker compose up --build
+#   Production: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# =============================================================
+
+services:
+  # --- MongoDB ---
+  mongo:
+    image: mongo:7
+    container_name: aikrut-mongo
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # --- Backend (FastAPI) ---
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aikrut-backend
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+    environment:
+      - MONGO_URL=mongodb://mongo:27017
+      - DB_NAME=${DB_NAME:-aikrut}
+      - JWT_SECRET=${JWT_SECRET:-aikrut-secret-key-2024}
+      - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET:-aikrut-admin-secret-key-2024}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD}
+    ports:
+      - "8000:8000"
+
+  # --- Frontend (React → Nginx) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_BACKEND_URL: ${REACT_APP_BACKEND_URL:-http://localhost:8000}
+    container_name: aikrut-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+
+  # --- Nginx Reverse Proxy ---
+  nginx:
+    image: nginx:alpine
+    container_name: aikrut-nginx
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-3000}:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - backend
+      - frontend
+
+volumes:
+  mongo_data:
+    driver: local

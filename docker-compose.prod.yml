@@ -1,0 +1,36 @@
+# =============================================================
+# Production overrides for docker-compose.yml
+# =============================================================
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+# =============================================================
+
+services:
+  # Override nginx to use production config with SSL
+  nginx:
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.prod.conf:/etc/nginx/conf.d/default.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_webroot:/var/www/certbot:ro
+
+  # Don't expose backend/mongo ports in production
+  backend:
+    ports: !reset []
+
+  mongo:
+    ports: !reset []
+
+  # Certbot for SSL certificate renewal
+  certbot:
+    image: certbot/certbot
+    container_name: aikrut-certbot
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt
+      - certbot_webroot:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+volumes:
+  certbot_webroot:
+    driver: local

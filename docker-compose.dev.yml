@@ -1,0 +1,25 @@
+# =============================================================
+# Development-only: Just MongoDB
+# =============================================================
+# Usage: docker compose -f docker-compose.dev.yml up -d
+# Then run backend & frontend locally for hot-reload.
+# =============================================================
+
+services:
+  mongo:
+    image: mongo:7
+    container_name: aikrut-mongo-dev
+    restart: unless-stopped
+    volumes:
+      - mongo_dev_data:/data/db
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_dev_data:
+    driver: local
