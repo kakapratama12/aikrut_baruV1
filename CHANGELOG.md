@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 - **Job List Crash**: Fixed a Pydantic validation error that caused the `/jobs` API to return 500 when legacy jobs with string-based descriptions existed in the database. The schema now accepts both `dict` and `str` formats for backwards compatibility.
+- **Sticky TopBar**: The page header (title + credit balance) now stays pinned at the top when scrolling, instead of scrolling away with the content.
+- **Job Card Alignment**: The "Playbook ready" footer row and trash icon on job cards are now always anchored to the bottom of each card, regardless of varying content heights.
 
 ## [v0.1.0-alpha] - 2026-02-21
 
