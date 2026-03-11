@@ -198,40 +198,9 @@ class CompetencyProfile(CompetencyProfileCreate):
 # --- LEGACY MODELS (DEPRECATED) ---
 
 # Auth Models
-class UserRole(str, Enum):
-    hr_admin = "hr_admin"
-    manager = "manager"
-    viewer = "viewer"
-    employee = "employee"
-
-class UserCreate(BaseModel):
-    email: EmailStr
-    password: str
-    name: str
-    role: UserRole = UserRole.hr_admin
-    is_platform_admin: bool = False
-
-class UserLogin(BaseModel):
-    email: EmailStr
-    password: str
-
-class UserResponse(BaseModel):
-    id: str
-    email: str
-    name: str
-    company_id: Optional[str] = None
-    role: UserRole = UserRole.hr_admin
-    is_platform_admin: bool = False
-    created_at: str
-    is_approved: Optional[bool] = False
-    is_active: Optional[bool] = False
-    credits: Optional[float] = 0.0
-    expiry_date: Optional[str] = None
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    user: UserResponse
+from backend.models.user import (
+    UserRole, UserCreate, UserLogin, UserResponse, TokenResponse
+)
 
 # Company Models
 class CompanyValue(BaseModel):
@@ -458,96 +427,10 @@ class SettingsUpdate(BaseModel):
 
 # ==================== AUTH HELPERS ====================
 
-def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
-
-def verify_password(password: str, hashed: str) -> bool:
-    return bcrypt.checkpw(password.encode(), hashed.encode())
-
-def create_token(user_id: str) -> str:
-    payload = {
-        "user_id": user_id,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
-    }
-    return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        payload = jwt.decode(credentials.credentials, JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        user_id = payload.get("user_id")
-        user = await db.users.find_one({"id": user_id}, {"_id": 0})
-        if not user:
-            raise HTTPException(status_code=401, detail="User not found")
-        
-        # Backward compatibility: if user doesn't have these fields, set defaults
-        if "is_approved" not in user:
-            user["is_approved"] = True
-            user["is_active"] = True
-            user["credits"] = 0.0
-            user["role"] = UserRole.hr_admin.value
-            user["is_platform_admin"] = False
-            # Update in database for future
-            await db.users.update_one(
-                {"id": user_id}, 
-                {"$set": {
-                    "is_approved": True, 
-                    "is_active": True, 
-                    "credits": 0.0,
-                    "role": UserRole.hr_admin.value,
-                    "is_platform_admin": False
-                }}
-            )
-        
-        # Ensure role exists even if is_approved check was bypassed by older logic
-        if "role" not in user:
-            user["role"] = UserRole.hr_admin.value
-            user["is_platform_admin"] = False
-        
-        # Check if user is approved and active (only for new users)
-        if not user.get("is_approved", True):
-            raise HTTPException(status_code=403, detail="Account pending approval. Please wait for admin approval.")
-        if not user.get("is_active", True):
-            raise HTTPException(status_code=403, detail="Account is inactive. Please contact admin.")
-        
-        return user
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid token")
-
-def RequireRole(*allowed_roles: UserRole):
-    async def role_checker(current_user: dict = Depends(get_current_user)):
-        is_platform_admin = current_user.get("is_platform_admin", False)
-        if is_platform_admin:
-            return current_user  # platform admin bypasses all role checks
-            
-        role_str = current_user.get("role", UserRole.hr_admin.value)
-        try:
-            role = UserRole(role_str)
-        except ValueError:
-            role = UserRole.hr_admin # Fallback against corrupted data
-            
-        if role not in allowed_roles:
-            raise HTTPException(
-                status_code=403,
-                detail=f"Access denied. Required roles: {[r.value for r in allowed_roles]}"
-            )
-        return current_user
-    return role_checker
-
-def get_company_id(current_user: dict) -> str:
-    """Extract and validate company_id from the authenticated user.
-    
-    This is the SINGLE SOURCE OF TRUTH for tenant isolation.
-    All endpoints must use this instead of query params or request body.
-    """
-    company_id = current_user.get("company_id")
-    if not company_id:
-        raise HTTPException(
-            status_code=403, 
-            detail="No company assigned. Please contact your administrator."
-        )
-    return company_id
+from backend.auth.dependencies import (
+    hash_password, verify_password, create_token,
+    get_current_user, RequireRole, get_company_id
+)
 
 # ==================== MULTI-TENANT ADMIN MODELS ====================
 
@@ -584,13 +467,13 @@ class AdminCompanyResponse(BaseModel):
     created_at: str
     updated_at: str
 
-class ApproveUserRequest(BaseModel):
-    company_id: str
-    role: UserRole
-    credits: float = 100.0
+from backend.models.user import ApproveUserRequest, UserUpdateByAdmin
 
 # ==================== ADMIN AUTH HELPERS ====================
 
+from backend.auth.admin import create_admin_token, get_current_admin
+# AdminLogin and AdminTokenResponse were temporarily removed but I need them. Wait, I should import them if they were declared in server.py before.
+# Let me just redefine AdminLogin and AdminTokenResponse in models.user or here.
 class AdminLogin(BaseModel):
     username: str
     password: str
@@ -600,35 +483,7 @@ class AdminTokenResponse(BaseModel):
     token_type: str = "bearer"
     username: str
 
-def create_admin_token(username: str) -> str:
-    payload = {
-        "username": username,
-        "is_admin": True,
-        "exp": datetime.now(timezone.utc) + timedelta(hours=JWT_EXPIRATION_HOURS)
-    }
-    return jwt.encode(payload, ADMIN_JWT_SECRET, algorithm=JWT_ALGORITHM)
-
-async def get_current_admin(credentials: HTTPAuthorizationCredentials = Depends(security)):
-    try:
-        payload = jwt.decode(credentials.credentials, ADMIN_JWT_SECRET, algorithms=[JWT_ALGORITHM])
-        is_admin = payload.get("is_admin")
-        username = payload.get("username")
-        
-        if not is_admin or username != SUPER_ADMIN_USERNAME:
-            raise HTTPException(status_code=403, detail="Admin access required")
-        
-        return {"username": username, "is_admin": True}
-    except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail="Token expired")
-    except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail="Invalid admin token")
-
 # Admin Models
-class UserUpdateByAdmin(BaseModel):
-    is_approved: Optional[bool] = None
-    is_active: Optional[bool] = None
-    credits: Optional[float] = None
-    expiry_date: Optional[str] = None
 
 class AdminDashboardStats(BaseModel):
     total_users: int
