@@ -705,12 +705,17 @@ class AdminDashboardStats(BaseModel):
 # Credit rates for different operations (cost multiplier of OpenRouter)
 # These rates can be configured by admin
 DEFAULT_CREDIT_RATES = {
-    "company_values_generation": 1.5,  # 1.5x multiplier
+    # Legacy operations (do not change):
+    "company_values_generation": 1.5,
     "job_description_generation": 1.5,
     "playbook_generation": 1.5,
-    "cv_parsing_ai": 1.3,  # Lower multiplier for parsing
-    "candidate_analysis": 2.0,  # Higher multiplier for complex analysis
-    "tag_extraction": 1.5
+    "cv_parsing_ai": 1.3,
+    "candidate_analysis": 2.0,
+    "tag_extraction": 1.5,
+    # Assessment OS operations (Phase 2 integration points):
+    "evidence_analysis": 2.0,    # CV + knowledge test analysis
+    "roleplay_session": 5.0,     # Multi-turn roleplay (token-heavy)
+    "competency_scoring": 1.5,   # AI narrative + gap analysis
 }
 
 class CreditUsageLog(BaseModel):
@@ -739,8 +744,8 @@ async def get_credit_rate(operation_type: str) -> float:
 
 async def check_user_credits(user_id: str, estimated_credits: float = 0.0) -> CreditCheckResult:
     """
-    Check if user has sufficient credits.
-    Allows one-time negative balance, but blocks further operations.
+    Check if user has sufficient credits and a valid (non-expired) account.
+    Returns 403 for expired accounts, 402 for insufficient credits.
     """
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
@@ -750,10 +755,26 @@ async def check_user_credits(user_id: str, estimated_credits: float = 0.0) -> Cr
             required_credits=estimated_credits,
             message="User not found"
         )
-    
+
+    # Expiry date check — raises 403 immediately (hard block)
+    expiry_date_str = user.get("expiry_date")
+    if expiry_date_str:
+        try:
+            expiry = datetime.fromisoformat(expiry_date_str)
+            # Ensure expiry is timezone-aware for comparison
+            if expiry.tzinfo is None:
+                expiry = expiry.replace(tzinfo=timezone.utc)
+            if datetime.now(timezone.utc) > expiry:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Account expired. Please contact your administrator to renew access."
+                )
+        except ValueError:
+            pass  # Malformed date — skip check, don't block
+
     current_credits = user.get("credits", 0.0)
-    
-    # If current balance is already negative or zero, block
+
+    # If current balance is already negative or zero, block with 402
     if current_credits <= 0:
         return CreditCheckResult(
             has_credits=False,
@@ -761,9 +782,8 @@ async def check_user_credits(user_id: str, estimated_credits: float = 0.0) -> Cr
             required_credits=estimated_credits,
             message=f"Insufficient credits. Current balance: {current_credits:.2f}. Please top up to continue using AI features."
         )
-    
+
     # If this operation would make balance negative but user hasn't gone negative yet, allow it once
-    # We'll check this after the operation completes
     return CreditCheckResult(
         has_credits=True,
         current_balance=current_credits,
@@ -1505,7 +1525,195 @@ async def reject_user(
     updated_user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
     return {"message": "User rejected", "user": updated_user}
 
+# ==================== ADMIN: CREDIT MANAGEMENT ====================
+
+# Pydantic models for credit endpoints
+class CreditTopupRequest(BaseModel):
+    amount: float
+    note: str = ""
+
+class CreditEstimateResponse(BaseModel):
+    operation: str
+    estimated_credits: int
+    note: str = ""
+
+# Fixed credit cost table (BUMN-friendly: predictable numbers for PO/budgeting)
+# Editable via Super Admin in a future release — for now, derived from DEFAULT_CREDIT_RATES
+CREDIT_COST_TABLE = {
+    "evidence_analysis": 10,    # credits per session
+    "roleplay_session": 25,     # credits per session
+    "competency_scoring": 5,    # credits per session
+}
+
+@api_router.post("/admin/users/{user_id}/credits/topup")
+async def topup_user_credits(
+    user_id: str,
+    body: CreditTopupRequest,
+    admin: dict = Depends(get_current_admin)
+):
+    """Add credits to a user account and log the transaction."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    if body.amount <= 0:
+        raise HTTPException(status_code=400, detail="Amount must be positive")
+
+    current_credits = user.get("credits", 0.0)
+    new_balance = current_credits + body.amount
+
+    await db.users.update_one(
+        {"id": user_id},
+        {"$set": {"credits": new_balance}}
+    )
+
+    # Update company credits_balance (display only)
+    company_id = user.get("company_id")
+    if company_id:
+        company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+        if company:
+            new_company_balance = company.get("credits_balance", 0.0) + body.amount
+            await db.companies.update_one(
+                {"id": company_id},
+                {"$set": {"credits_balance": new_company_balance}}
+            )
+
+    # Log to credit_usage_logs
+    usage_log = {
+        "id": str(uuid.uuid4()),
+        "user_id": user_id,
+        "operation_type": "admin_topup",
+        "tokens_used": 0,
+        "openrouter_cost": 0.0,
+        "credits_charged": -body.amount,  # Negative = addition
+        "model_used": "n/a",
+        "note": body.note,
+        "created_by": admin.get("username", "admin"),
+        "created_at": datetime.now(timezone.utc).isoformat()
+    }
+    await db.credit_usage_logs.insert_one(usage_log)
+
+    return {
+        "message": f"Successfully added {body.amount} credits to user {user_id}",
+        "previous_balance": current_credits,
+        "added": body.amount,
+        "new_balance": new_balance,
+        "note": body.note
+    }
+
+@api_router.get("/admin/users/{user_id}/credits/history")
+async def get_user_credit_history(
+    user_id: str,
+    limit: int = 50,
+    admin: dict = Depends(get_current_admin)
+):
+    """Return credit usage history for a specific user."""
+    user = await db.users.find_one({"id": user_id}, {"_id": 0})
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    cursor = db.credit_usage_logs.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1).limit(limit)
+
+    logs = [log async for log in cursor]
+    current_credits = user.get("credits", 0.0)
+
+    return {
+        "user_id": user_id,
+        "current_balance": current_credits,
+        "history": logs,
+        "total_entries": len(logs)
+    }
+
+@api_router.get("/admin/companies/{company_id}/credits/usage")
+async def get_company_credit_usage(
+    company_id: str,
+    admin: dict = Depends(get_current_admin)
+):
+    """Aggregate credit usage for all users in a company."""
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+
+    # Get all user_ids for this company
+    users_cursor = db.users.find({"company_id": company_id}, {"id": 1, "email": 1, "name": 1, "credits": 1, "_id": 0})
+    users = [u async for u in users_cursor]
+    user_ids = [u["id"] for u in users]
+
+    if not user_ids:
+        return {"company_id": company_id, "total_credits_consumed": 0, "users": [], "history": []}
+
+    # Aggregate usage logs (exclude topups from consumption total)
+    pipeline = [
+        {"$match": {"user_id": {"$in": user_ids}, "operation_type": {"$ne": "admin_topup"}}},
+        {"$group": {
+            "_id": "$user_id",
+            "total_credits": {"$sum": "$credits_charged"},
+            "total_tokens": {"$sum": "$tokens_used"},
+            "operations_count": {"$sum": 1}
+        }}
+    ]
+    usage_by_user = {}
+    async for doc in db.credit_usage_logs.aggregate(pipeline):
+        usage_by_user[doc["_id"]] = {
+            "credits_consumed": round(doc["total_credits"], 4),
+            "tokens_used": doc["total_tokens"],
+            "operations_count": doc["operations_count"]
+        }
+
+    # Merge user info with usage
+    user_summary = []
+    total_consumed = 0.0
+    for u in users:
+        uid = u["id"]
+        usage = usage_by_user.get(uid, {"credits_consumed": 0, "tokens_used": 0, "operations_count": 0})
+        total_consumed += usage["credits_consumed"]
+        user_summary.append({
+            "user_id": uid,
+            "email": u.get("email"),
+            "name": u.get("name"),
+            "current_balance": u.get("credits", 0.0),
+            **usage
+        })
+
+    return {
+        "company_id": company_id,
+        "company_name": company.get("name"),
+        "total_credits_consumed": round(total_consumed, 4),
+        "user_count": len(users),
+        "users": user_summary
+    }
+
+# ==================== CREDIT ESTIMATE (User-facing) ====================
+
+@api_router.get("/credits/estimate", response_model=CreditEstimateResponse)
+async def estimate_credit_cost(
+    operation: str,
+    current_user: dict = Depends(get_current_user)
+):
+    """
+    Return estimated credit cost for a given operation.
+    Used by frontend to show confirmation dialog before triggering assessment.
+    Does NOT deduct credits.
+    """
+    if operation not in CREDIT_COST_TABLE:
+        valid_ops = list(CREDIT_COST_TABLE.keys())
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown operation '{operation}'. Valid operations: {valid_ops}"
+        )
+
+    estimated = CREDIT_COST_TABLE[operation]
+    return CreditEstimateResponse(
+        operation=operation,
+        estimated_credits=estimated,
+        note="Estimated cost only. Actual cost may vary slightly based on session length."
+    )
+
 # ==================== SUPER ADMIN: COMPANY MANAGEMENT ====================
+
 
 @api_router.post("/admin/companies", response_model=AdminCompanyResponse)
 async def admin_create_company(

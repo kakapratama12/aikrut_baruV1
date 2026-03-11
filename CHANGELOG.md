@@ -5,6 +5,19 @@ All notable changes to the Aikrut platform will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html) (currently in `v0.x` pre-release phase).
 
+## [v0.4.0-alpha] - 2026-03-11
+
+### Added
+- **Assessment OS Credit Rates**: Extended `DEFAULT_CREDIT_RATES` with 3 new operation types: `evidence_analysis` (2.0×), `roleplay_session` (5.0×), `competency_scoring` (1.5×). These are Phase 2 integration points — rates are defined now, actual deduction happens when assessment endpoints are built.
+- **Fixed Credit Cost Table (`CREDIT_COST_TABLE`)**: BUMN-friendly fixed integers per session — Evidence Analysis: 10 credits, Roleplay: 25 credits, Competency Scoring: 5 credits. Used for user-facing estimates and PO/budgeting.
+- **Admin Credit Topup** (`POST /api/admin/users/{id}/credits/topup`): Dedicated endpoint for admins to add credits to a user. Logs to `credit_usage_logs` with `operation_type: "admin_topup"` and updates company `credits_balance` display field.
+- **Credit Usage History** (`GET /api/admin/users/{id}/credits/history`): Returns full credit transaction log for a specific user, sorted by recency.
+- **Company Credit Usage Report** (`GET /api/admin/companies/{id}/credits/usage`): Aggregates credit consumption across all users in a company. Excludes topups from consumption totals.
+- **Credit Estimate Endpoint** (`GET /api/credits/estimate?operation=X`): User-facing endpoint returning estimated credit cost for an operation. Read-only — does not deduct credits. Designed for FE confirmation dialogs in Phase 3.
+
+### Changed
+- **`check_user_credits()` — Expiry Enforcement**: Added `expiry_date` check before credit check. Expired accounts receive HTTP **403** ("Account expired"); insufficient credits receive HTTP **402** ("Insufficient credits"). FE can now display different messages for each case.
+
 ## [v0.3.0-alpha] - 2026-03-11
 
 ### Added
