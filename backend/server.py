@@ -50,150 +50,15 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # ==================== MODELS ====================
 
-from enum import Enum
-from pydantic import model_validator
-
-# --- HR ASSESSMENT OS MODELS (PHASE 1) ---
-
-class CompetencyType(str, Enum):
-    hard_skill = "hard_skill"
-    soft_skill = "soft_skill"
-
-class CompetencyLevel(BaseModel):
-    level: int  # 1-5
-    description: Optional[str] = ""
-
-class CompetencyCreate(BaseModel):
-    company_id: str
-    name: str
-    description: str
-    type: CompetencyType
-    levels: List[CompetencyLevel] = []
-
-class Competency(CompetencyCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str
-    updated_at: str
-
-class PositionCompetencyRequirement(BaseModel):
-    competency_id: str
-    rubric_id: Optional[str] = None
-    standard_minimum: int  # 1-5
-    weight_evidence: int   # %
-    weight_roleplay: int   # %
-
-class PositionCreate(BaseModel):
-    company_id: str
-    title: str
-    department: str
-    level: int  # 1-6
-    required_competencies: List[PositionCompetencyRequirement] = []
-
-class Position(PositionCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str
-    updated_at: str
-
-class EvaluationRubricCreate(BaseModel):
-    company_id: str
-    name: str
-    evidence_mapping: List[Dict[str, Any]] = []
-    roleplay_mapping: List[Dict[str, Any]] = []
-
-class EvaluationRubric(EvaluationRubricCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str
-    updated_at: str
-
-class EmploymentType(str, Enum):
-    internal = "internal"
-    external = "external"
-
-class EmployeeCreate(BaseModel):
-    company_id: str
-    name: str
-    email: str
-    current_position: str
-    employment_type: EmploymentType = EmploymentType.internal
-    status: str = "aktif"
-
-class Employee(EmployeeCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str
-    updated_at: str
-
-class AssessmentStatus(str, Enum):
-    pending = "pending"
-    in_progress = "in_progress"
-    completed = "completed"
-    pending_review = "pending_review"
-    approved = "approved"
-    overridden = "overridden"
-    request_more_info = "request_more_info"
-
-class AssessmentPurpose(str, Enum):
-    promotion = "promotion"
-    hiring = "hiring"
-
-class AIRecommendation(str, Enum):
-    promote = "promote"
-    hire = "hire"
-    not_yet = "not_yet"
-    no = "no"
-
-class FinalOutcome(str, Enum):
-    promoted = "promoted"
-    hired = "hired"
-    not_yet = "not_yet"
-    no = "no"
-
-class AssessmentSessionCreate(BaseModel):
-    company_id: str
-    person_id: str
-    target_position_id: str
-    purpose: AssessmentPurpose
-
-class AssessmentSession(AssessmentSessionCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    status: AssessmentStatus = AssessmentStatus.pending
-    reviewer_id: Optional[str] = None
-    reviewer_notes: Optional[str] = None
-    ai_recommendation: Optional[AIRecommendation] = None
-    override_reason: Optional[str] = None
-    final_outcome: Optional[FinalOutcome] = None
-    credits_consumed: int = 0
-    created_at: str
-    decided_at: Optional[str] = None
-
-    @model_validator(mode='after')
-    def validate_override_reason(self) -> 'AssessmentSession':
-        if self.final_outcome is not None and self.ai_recommendation is not None:
-            # Normalize semantics for comparison 
-            # (e.g. promote -> promoted, hire -> hired)
-            mapping = {
-                "promote": "promoted",
-                "hire": "hired",
-                "not_yet": "not_yet",
-                "no": "no"
-            }
-            if mapping.get(self.ai_recommendation.value) != self.final_outcome.value:
-                if not self.override_reason or not self.override_reason.strip():
-                    raise ValueError("override_reason is required when final_outcome differs from ai_recommendation")
-        return self
-
-class CompetencyProfileCreate(BaseModel):
-    session_id: str
-    person_id: str
-    company_id: str
-    competency_scores: List[Dict[str, Any]] = []
-    raw_evidence: Dict[str, Any] = {}
-    raw_roleplay: Dict[str, Any] = {}
-    narrative: Dict[str, Any] = {}
-
-class CompetencyProfile(CompetencyProfileCreate):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    created_at: str
-    updated_at: str
+from backend.models.assessment import (
+    CompetencyType, CompetencyLevel, CompetencyCreate, Competency,
+    PositionCompetencyRequirement, PositionCreate, Position,
+    EvaluationRubricCreate, EvaluationRubric,
+    AssessmentStatus, AssessmentPurpose, AIRecommendation, FinalOutcome,
+    AssessmentSessionCreate, AssessmentSession,
+    CompetencyProfileCreate, CompetencyProfile
+)
+from backend.models.employee import EmploymentType, EmployeeCreate, Employee
 
 # --- LEGACY MODELS (DEPRECATED) ---
 
@@ -203,227 +68,24 @@ from backend.models.user import (
 )
 
 # Company Models
-class CompanyValue(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    description: str
-    weight: float  # 0-100, total must equal 100
-
-class CompanyCreate(BaseModel):
-    name: str
-    description: Optional[str] = ""
-    industry: Optional[str] = ""
-    website: Optional[str] = ""
-    values: List[CompanyValue] = []
-
-class CompanyUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    industry: Optional[str] = None
-    website: Optional[str] = None
-    values: Optional[List[CompanyValue]] = None
-
-class CompanyResponse(BaseModel):
-    id: str
-    name: str
-    description: str
-    industry: str
-    website: str
-    values: List[CompanyValue]
-    created_at: str
-    updated_at: str
+from backend.models.company import CompanyValue, CompanyCreate, CompanyUpdate, CompanyResponse
 
 # Job Models
-class PlaybookItem(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str
-    description: str
-    weight: float  # 0-100, total per category must equal 100
-
-class JobPlaybook(BaseModel):
-    character: List[PlaybookItem] = []
-    requirement: List[PlaybookItem] = []
-    skill: List[PlaybookItem] = []
-
-from typing import Union
-
-class JobCreate(BaseModel):
-    title: str
-    description: Union[dict, str]
-    requirements: Union[dict, str]
-    location: Optional[str] = ""
-    employment_type: Optional[str] = "full-time"
-    salary_range: Optional[str] = ""
-    playbook: Optional[JobPlaybook] = None
-
-class JobUpdate(BaseModel):
-    title: Optional[str] = None
-    description: Optional[Union[dict, str]] = None
-    requirements: Optional[Union[dict, str]] = None
-    location: Optional[str] = None
-    employment_type: Optional[str] = None
-    salary_range: Optional[str] = None
-    playbook: Optional[JobPlaybook] = None
-    status: Optional[str] = None
-
-class JobResponse(BaseModel):
-    id: str
-    company_id: str
-    title: str
-    description: Union[dict, str]
-    requirements: Union[dict, str]
-    location: str
-    employment_type: str
-    salary_range: str
-    playbook: Optional[JobPlaybook]
-    status: str
-    created_at: str
-    updated_at: str
+from backend.models.job import PlaybookItem, JobPlaybook, JobCreate, JobUpdate, JobResponse
 
 # Candidate Models
-class CandidateEvidence(BaseModel):
-    type: str  # cv, psychotest, knowledge_test
-    file_name: str
-    content: str  # parsed text content
-    uploaded_at: str
-
-class CandidateCreate(BaseModel):
-    name: str
-    email: EmailStr
-    phone: Optional[str] = ""
-
-# ==================== TALENT TAGGING MODELS & CONSTANTS ====================
-
-# Layer 1: Domain / Function (max 3)
-LAYER_1_TAGS = [
-    "OPERATIONS", "HUMAN_RESOURCES", "FINANCE", "ACCOUNTING", 
-    "INFORMATION_TECHNOLOGY", "DATA_ANALYTICS", "PRODUCT", "ENGINEERING",
-    "SALES", "MARKETING", "CUSTOMER_SUPPORT", "LEGAL", 
-    "PROCUREMENT", "SUPPLY_CHAIN", "LOGISTICS"
-]
-
-# Layer 2: Job Family (max 3)
-LAYER_2_TAGS = [
-    # Operations & Admin
-    "GENERAL_OPERATIONS", "GENERAL_ADMINISTRATION", "HR_OPERATIONS",
-    "TALENT_ACQUISITION", "LEARNING_DEVELOPMENT", "PAYROLL_COMPLIANCE",
-    "ACCOUNTING_SUPPORT", "FINANCIAL_REPORTING", "FINANCIAL_CONTROL",
-    "PROCUREMENT_VENDOR_MANAGEMENT", "LEGAL_COMPLIANCE",
-    # Tech
-    "SOFTWARE_DEVELOPMENT", "IT_OPERATIONS", "PROJECT_MANAGEMENT",
-    "PRODUCT_MANAGEMENT", "QA_TESTING", "DATA_ANALYTICS", "DATA_ENGINEERING",
-    "DEVOPS_CLOUD", "UI_UX_DESIGN",
-    # Sales & Marketing
-    "B2B_SALES", "B2C_SALES", "KEY_ACCOUNT_MANAGEMENT", "DIGITAL_MARKETING",
-    "PERFORMANCE_MARKETING", "BRAND_CONTENT", "CUSTOMER_SUPPORT", "CUSTOMER_SUCCESS",
-    # Supply Chain & Engineering
-    "SUPPLY_CHAIN_MANAGEMENT", "LOGISTICS_OPERATIONS", "NON_IT_ENGINEERING",
-    "RESEARCH_DEVELOPMENT"
-]
-
-# Layer 4: Scope of Work (max 3)
-LAYER_4_TAGS = ["OPERATIONAL", "TACTICAL", "STRATEGIC"]
-
-# Layer definitions with metadata
-LAYER_DEFINITIONS = {
-    1: {"name": "Domain / Function", "max_tags": 3, "library": LAYER_1_TAGS},
-    2: {"name": "Job Family", "max_tags": 3, "library": LAYER_2_TAGS},
-    3: {"name": "Skill / Competency", "max_tags": 10, "library": None},  # Free text, AI normalized
-    4: {"name": "Scope of Work", "max_tags": 3, "library": LAYER_4_TAGS}
-}
-
-# Logical consistency mapping: Layer 1 -> valid Layer 2 tags
-LAYER_1_TO_2_MAPPING = {
-    "OPERATIONS": ["GENERAL_OPERATIONS", "GENERAL_ADMINISTRATION"],
-    "HUMAN_RESOURCES": ["HR_OPERATIONS", "TALENT_ACQUISITION", "LEARNING_DEVELOPMENT", "PAYROLL_COMPLIANCE"],
-    "FINANCE": ["FINANCIAL_REPORTING", "FINANCIAL_CONTROL"],
-    "ACCOUNTING": ["ACCOUNTING_SUPPORT", "FINANCIAL_REPORTING"],
-    "INFORMATION_TECHNOLOGY": ["SOFTWARE_DEVELOPMENT", "IT_OPERATIONS", "DEVOPS_CLOUD", "QA_TESTING"],
-    "DATA_ANALYTICS": ["DATA_ANALYTICS", "DATA_ENGINEERING"],
-    "PRODUCT": ["PRODUCT_MANAGEMENT", "UI_UX_DESIGN"],
-    "ENGINEERING": ["SOFTWARE_DEVELOPMENT", "NON_IT_ENGINEERING", "RESEARCH_DEVELOPMENT", "QA_TESTING"],
-    "SALES": ["B2B_SALES", "B2C_SALES", "KEY_ACCOUNT_MANAGEMENT"],
-    "MARKETING": ["DIGITAL_MARKETING", "PERFORMANCE_MARKETING", "BRAND_CONTENT"],
-    "CUSTOMER_SUPPORT": ["CUSTOMER_SUPPORT", "CUSTOMER_SUCCESS"],
-    "LEGAL": ["LEGAL_COMPLIANCE"],
-    "PROCUREMENT": ["PROCUREMENT_VENDOR_MANAGEMENT"],
-    "SUPPLY_CHAIN": ["SUPPLY_CHAIN_MANAGEMENT"],
-    "LOGISTICS": ["LOGISTICS_OPERATIONS"]
-}
-
-class CandidateTag(BaseModel):
-    tag_value: str
-    layer: int  # 1, 2, 3, or 4
-    layer_name: str
-    source: str  # "AUTO" or "MANUAL"
-    confidence_score: Optional[float] = None  # For AUTO tags, 0.0-1.0
-    created_at: str
-
-class TagAddRequest(BaseModel):
-    tag_value: str
-    layer: int
-
-class TagExtractionResponse(BaseModel):
-    tags: List[CandidateTag]
-    extraction_summary: str
-    evidence_used: List[str]
-
-class CandidateResponse(BaseModel):
-    id: str
-    company_id: str
-    name: str
-    email: str
-    phone: str
-    evidence: List[CandidateEvidence]
-    tags: Optional[List[CandidateTag]] = []
-    deleted_tags: Optional[List[str]] = []  # Blacklisted tag values
-    created_at: str
-    updated_at: str
-
-# Analysis Models
-class ScoreBreakdown(BaseModel):
-    item_id: str
-    item_name: str
-    raw_score: float  # 0-100
-    weight: float
-    weighted_score: float
-    reasoning: str
-
-class CategoryScore(BaseModel):
-    category: str  # character, requirement, skill
-    score: float
-    breakdown: List[ScoreBreakdown]
-
-class AnalysisResult(BaseModel):
-    id: str
-    job_id: str
-    candidate_id: str
-    candidate_name: Optional[str] = None  # Store name for when candidate is deleted
-    final_score: float
-    category_scores: List[CategoryScore]
-    overall_reasoning: str
-    company_values_alignment: Optional[Dict[str, Any]] = None
-    strengths: Optional[List[str]] = []
-    gaps: Optional[List[str]] = []
-    created_at: str
-
-class BatchAnalysisRequest(BaseModel):
-    job_id: str
-    candidate_ids: List[str]
+# Candidate Models
+from backend.models.candidate import (
+    CandidateEvidence, CandidateCreate, CandidateTag, TagAddRequest, 
+    TagExtractionResponse, CandidateResponse, ScoreBreakdown, 
+    CategoryScore, AnalysisResult, BatchAnalysisRequest,
+    LAYER_1_TAGS, LAYER_2_TAGS, LAYER_4_TAGS, LAYER_DEFINITIONS, LAYER_1_TO_2_MAPPING,
+    CandidateUpdate, ReplaceCandidate
+)
 
 # Settings Models
-class AISettings(BaseModel):
-    openrouter_api_key: Optional[str] = ""
-    model_name: str = "openai/gpt-4o-mini"
-    language: str = "en"  # en or id
-
-class SettingsUpdate(BaseModel):
-    openrouter_api_key: Optional[str] = None
-    model_name: Optional[str] = None
-    language: Optional[str] = None
-    primary_color: Optional[str] = None  # Brand color for PDF reports
-    secondary_color: Optional[str] = None  # Secondary brand color
-    company_logo: Optional[str] = None  # Base64 encoded logo for PDF reports
+# Settings Models
+from backend.models.admin import SettingsUpdate
 
 # ==================== AUTH HELPERS ====================
 
@@ -434,38 +96,21 @@ from backend.auth.dependencies import (
 
 # ==================== MULTI-TENANT ADMIN MODELS ====================
 
-class AdminCompanyCreate(BaseModel):
-    name: str
-    description: Optional[str] = ""
-    industry: Optional[str] = ""
-    website: Optional[str] = ""
-    subscription_tier: str = "free"  # free | pro | enterprise
-    credits_balance: float = 0.0
-    expiry_date: Optional[str] = None
+from backend.models.company import AdminCompanyCreate, AdminCompanyUpdate, AdminCompanyResponse
+from backend.models.admin import (
+    AdminLogin, AdminTokenResponse, CreditTopupRequest, CreditEstimateResponse,
+    GlobalSettingsUpdate, CreditRatesUpdate, AdminSettingsUpdate
+)
+from backend.models.common import (
+    BulkDeleteRequest, PDFReportRequest, DuplicateDetectionRequest, 
+    DuplicateMatch, DuplicateDetectionResponse, MergeRequest, MergeLogEntry, ZipUploadResponse
+)
 
-class AdminCompanyUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    industry: Optional[str] = None
-    website: Optional[str] = None
-    subscription_tier: Optional[str] = None
-    credits_balance: Optional[float] = None
-    expiry_date: Optional[str] = None
-    is_active: Optional[bool] = None
 
-class AdminCompanyResponse(BaseModel):
-    id: str
-    name: str
-    description: str = ""
-    industry: str = ""
-    website: str = ""
-    values: List[CompanyValue] = []
-    subscription_tier: str = "free"
-    credits_balance: float = 0.0
-    expiry_date: Optional[str] = None
-    is_active: bool = True
-    created_at: str
-    updated_at: str
+
+
+
+
 
 from backend.models.user import ApproveUserRequest, UserUpdateByAdmin
 
@@ -474,25 +119,13 @@ from backend.models.user import ApproveUserRequest, UserUpdateByAdmin
 from backend.auth.admin import create_admin_token, get_current_admin
 # AdminLogin and AdminTokenResponse were temporarily removed but I need them. Wait, I should import them if they were declared in server.py before.
 # Let me just redefine AdminLogin and AdminTokenResponse in models.user or here.
-class AdminLogin(BaseModel):
-    username: str
-    password: str
 
-class AdminTokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    username: str
+
+
 
 # Admin Models
 
-class AdminDashboardStats(BaseModel):
-    total_users: int
-    pending_users: int
-    active_users: int
-    total_jobs: int
-    total_candidates: int
-    total_analyses: int
-    total_credits_distributed: float
+from backend.models.admin import AdminDashboardStats
 
 # ==================== CREDIT SYSTEM ====================
 
@@ -834,14 +467,9 @@ async def reject_user(
 # ==================== ADMIN: CREDIT MANAGEMENT ====================
 
 # Pydantic models for credit endpoints
-class CreditTopupRequest(BaseModel):
-    amount: float
-    note: str = ""
 
-class CreditEstimateResponse(BaseModel):
-    operation: str
-    estimated_credits: int
-    note: str = ""
+
+
 
 # Fixed credit cost table (BUMN-friendly: predictable numbers for PO/budgeting)
 # Editable via Super Admin in a future release — for now, derived from DEFAULT_CREDIT_RATES
@@ -1104,13 +732,9 @@ async def admin_deactivate_company(
     return {"message": f"Company {company_id} deactivated"}
 
 # Admin Settings Models
-class GlobalSettingsUpdate(BaseModel):
-    openrouter_api_key: Optional[str] = None
-    model_name: Optional[str] = None
-    default_credits_new_user: Optional[float] = None
 
-class CreditRatesUpdate(BaseModel):
-    rates: Dict[str, float]
+
+
 
 @api_router.get("/admin/settings")
 async def get_admin_settings(admin: dict = Depends(get_current_admin)):
@@ -2209,12 +1833,7 @@ async def delete_evidence(
         "remaining_evidence": len(evidence_list)
     }
 
-class ReplaceCandidate(BaseModel):
-    old_candidate_id: str
-    new_name: str
-    new_email: str
-    new_phone: str = ""
-    new_evidence: List[Dict] = []
+
 
 @api_router.post("/candidates/replace")
 async def replace_candidate(
@@ -3288,8 +2907,7 @@ async def delete_analysis(analysis_id: str, current_user: dict = Depends(get_cur
         raise HTTPException(status_code=404, detail="Analysis not found")
     return {"message": "Analysis deleted"}
 
-class BulkDeleteRequest(BaseModel):
-    ids: List[str]
+
 
 @api_router.post("/analysis/bulk-delete")
 async def bulk_delete_analyses(request: BulkDeleteRequest, current_user: dict = Depends(get_current_user)):
@@ -3300,9 +2918,7 @@ async def bulk_delete_analyses(request: BulkDeleteRequest, current_user: dict = 
     result = await db.analyses.delete_many({"id": {"$in": request.ids}})
     return {"message": f"Deleted {result.deleted_count} analysis result(s)"}
 
-class PDFReportRequest(BaseModel):
-    job_id: str
-    candidate_ids: List[str]
+
 
 @api_router.post("/analysis/generate-pdf")
 async def generate_pdf_report(request: PDFReportRequest, current_user: dict = Depends(get_current_user)):
@@ -3544,13 +3160,7 @@ async def update_settings(data: SettingsUpdate, current_user: dict = Depends(get
 
 # ==================== ADMIN SETTINGS ROUTES ====================
 
-class AdminSettingsUpdate(BaseModel):
-    cv_parse_prompt: Optional[str] = None
-    company_values_prompt: Optional[str] = None
-    job_desc_title_prompt: Optional[str] = None
-    job_desc_narrative_prompt: Optional[str] = None
-    playbook_prompt: Optional[str] = None
-    job_fit_prompt: Optional[str] = None
+
 
 @api_router.get("/admin-settings")
 async def get_admin_settings(current_user: dict = Depends(get_current_user)):
@@ -3744,10 +3354,7 @@ async def reset_admin_prompt(prompt_key: str, current_user: dict = Depends(get_c
 
 # ==================== CANDIDATE UPDATE ROUTE ====================
 
-class CandidateUpdate(BaseModel):
-    name: Optional[str] = None
-    email: Optional[str] = None
-    phone: Optional[str] = None
+
 
 @api_router.put("/candidates/{candidate_id}", response_model=CandidateResponse)
 async def update_candidate(candidate_id: str, data: CandidateUpdate, current_user: dict = Depends(get_current_user)):
@@ -3932,36 +3539,15 @@ def normalize_name(name: str) -> str:
     return ' '.join(name.lower().split())
 
 # Models for new endpoints
-class DuplicateDetectionRequest(BaseModel):
-    email: Optional[str] = None
-    phone: Optional[str] = None
-    name: Optional[str] = None
 
-class DuplicateMatch(BaseModel):
-    candidate_id: str
-    candidate_name: str
-    candidate_email: str
-    candidate_phone: str
-    match_reasons: List[str]
-    confidence: str  # "high", "medium"
 
-class DuplicateDetectionResponse(BaseModel):
-    has_duplicates: bool
-    matches: List[DuplicateMatch]
 
-class MergeRequest(BaseModel):
-    source_candidate_id: str
-    target_candidate_id: str
 
-class MergeLogEntry(BaseModel):
-    action: str
-    source_id: str
-    target_id: str
-    source_name: str
-    target_name: str
-    evidence_transferred: int
-    merged_by: str
-    merged_at: str
+
+
+
+
+
 
 @api_router.post("/candidates/detect-duplicates", response_model=DuplicateDetectionResponse)
 async def detect_duplicates(
@@ -4140,13 +3726,7 @@ async def merge_candidates(
         "merge_log_id": merge_log["id"]
     }
 
-class ZipUploadResponse(BaseModel):
-    status: str  # "created", "duplicate_warning", "error"
-    candidate: Optional[CandidateResponse] = None
-    duplicates: Optional[List[DuplicateMatch]] = None
-    message: str
-    files_processed: int
-    evidence_attached: int
+
 
 @api_router.post("/candidates/upload-zip", response_model=ZipUploadResponse)
 async def upload_zip(
