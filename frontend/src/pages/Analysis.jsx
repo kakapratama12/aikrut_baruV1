@@ -573,7 +573,7 @@ export const Analysis = () => {
         {/* Header */}
         <div className="mb-6">
           <h1 className="text-2xl font-heading font-bold text-slate-900">Job Fit Analysis</h1>
-          <p className="text-slate-500">AI-powered candidate evaluation with tag-based filtering</p>
+          <p className="text-slate-600">AI-powered candidate evaluation with tag-based filtering</p>
         </div>
 
         {/* TOP SECTION: Job Selection + Candidate Selection */}
@@ -609,15 +609,15 @@ export const Analysis = () => {
                 {selectedJobData && (
                   <div className="space-y-3 pt-3 border-t border-slate-100">
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wide">Department</p>
+                      <p className="text-xs text-slate-600 uppercase tracking-wide">Department</p>
                       <p className="text-sm font-medium">{selectedJobData.department || '-'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wide">Location</p>
+                      <p className="text-xs text-slate-600 uppercase tracking-wide">Location</p>
                       <p className="text-sm font-medium">{selectedJobData.location || '-'}</p>
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 uppercase tracking-wide">Playbook</p>
+                      <p className="text-xs text-slate-600 uppercase tracking-wide">Playbook</p>
                       <p className="text-sm font-medium">
                         {selectedJobData.playbook ? (
                           <span className="text-green-600 flex items-center gap-1">
@@ -634,7 +634,7 @@ export const Analysis = () => {
                 )}
 
                 {!selectedJob && (
-                  <div className="text-center py-6 text-slate-400">
+                  <div className="text-center py-6 text-slate-500">
                     <Briefcase className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">Select a job to start analysis</p>
                   </div>
@@ -653,7 +653,7 @@ export const Analysis = () => {
                     Filter & Select Candidates
                   </CardTitle>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-slate-500">
+                    <span className="text-sm text-slate-600">
                       {selectedCandidates.length} selected / {filteredCandidates.length} shown / {allCandidates.length} total
                     </span>
                     <Button
@@ -678,7 +678,7 @@ export const Analysis = () => {
                         Tag Filters (AND logic)
                       </span>
                       {hasActiveFilters && (
-                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-slate-500 h-7">
+                        <Button variant="ghost" size="sm" onClick={clearFilters} className="text-slate-600 h-7">
                           <X className="w-3 h-3 mr-1" /> Clear All
                         </Button>
                       )}
@@ -736,7 +736,7 @@ export const Analysis = () => {
                                       </label>
                                     ))}
                                     {filteredLayer1Tags.length === 0 && (
-                                      <p className="text-sm text-slate-400 text-center py-4">No matching domains</p>
+                                      <p className="text-sm text-slate-500 text-center py-4">No matching domains</p>
                                     )}
                                   </div>
                                 </ScrollArea>
@@ -786,7 +786,7 @@ export const Analysis = () => {
                                   <div className="space-y-4">
                                     {Object.entries(getFilteredLayer2Categories()).map(([category, tags]) => (
                                       <div key={category}>
-                                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
+                                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide mb-2">
                                           {category}
                                         </p>
                                         <div className="space-y-1">
@@ -806,7 +806,7 @@ export const Analysis = () => {
                                       </div>
                                     ))}
                                     {Object.keys(getFilteredLayer2Categories()).length === 0 && (
-                                      <p className="text-sm text-slate-400 text-center py-4">No matching job families</p>
+                                      <p className="text-sm text-slate-500 text-center py-4">No matching job families</p>
                                     )}
                                   </div>
                                 </ScrollArea>
@@ -852,7 +852,7 @@ export const Analysis = () => {
                 {/* Search and Select All */}
                 <div className="flex items-center gap-3">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                     <Input
                       value={candidateSearch}
                       onChange={(e) => setCandidateSearch(e.target.value)}
@@ -876,7 +876,7 @@ export const Analysis = () => {
                 {/* Candidate List */}
                 <ScrollArea className="h-[220px] border border-slate-100 rounded-lg">
                   {filteredCandidates.length === 0 ? (
-                    <div className="text-center py-8 text-slate-400">
+                    <div className="text-center py-8 text-slate-500">
                       <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
                       <p className="text-sm">No candidates match the filters</p>
                     </div>
@@ -896,7 +896,7 @@ export const Analysis = () => {
                           />
                           <div className="flex-1 min-w-0">
                             <p className="font-medium text-sm text-slate-900">{candidate.name}</p>
-                            <p className="text-xs text-slate-500">{candidate.email}</p>
+                            <p className="text-xs text-slate-600">{candidate.email}</p>
                           </div>
                           {/* Show candidate tags */}
                           <div className="flex flex-wrap gap-1 max-w-xs">
@@ -910,10 +910,10 @@ export const Analysis = () => {
                               </span>
                             ))}
                             {(candidate.tags?.length || 0) > 4 && (
-                              <span className="text-xs text-slate-400">+{candidate.tags.length - 4}</span>
+                              <span className="text-xs text-slate-500">+{candidate.tags.length - 4}</span>
                             )}
                           </div>
-                          <span className="text-xs text-slate-400 flex items-center gap-1">
+                          <span className="text-xs text-slate-500 flex items-center gap-1">
                             <FileText className="w-3 h-3" />
                             {candidate.evidence?.length || 0}
                           </span>
@@ -925,7 +925,7 @@ export const Analysis = () => {
 
                 {/* Run Analysis Button */}
                 <div className="flex items-center justify-between pt-2 border-t border-slate-100">
-                  <div className="text-sm text-slate-500">
+                  <div className="text-sm text-slate-600">
                     {selectedCandidates.length > 0 && selectedJob ? (
                       <span className="text-indigo-600 font-medium">
                         Ready to analyze {selectedCandidates.length} candidate(s)
@@ -1000,7 +1000,7 @@ export const Analysis = () => {
                 <BarChart3 className="w-5 h-5 text-indigo-500" />
                 Analysis Results
                 {selectedJob && results.length > 0 && (
-                  <span className="text-sm font-normal text-slate-500">
+                  <span className="text-sm font-normal text-slate-600">
                     ({results.length} results)
                   </span>
                 )}
@@ -1020,7 +1020,7 @@ export const Analysis = () => {
                 {results.length > 0 && (
                   <>
                     <div className="flex items-center gap-2">
-                      <Label className="text-sm text-slate-500">Min Score:</Label>
+                      <Label className="text-sm text-slate-600">Min Score:</Label>
                       <Input
                         type="number"
                         value={minScore}
@@ -1049,12 +1049,12 @@ export const Analysis = () => {
           </CardHeader>
           <CardContent>
             {!selectedJob ? (
-              <div className="text-center py-12 text-slate-400">
+              <div className="text-center py-12 text-slate-500">
                 <BarChart3 className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>Select a job to view analysis results</p>
               </div>
             ) : results.length === 0 ? (
-              <div className="text-center py-12 text-slate-400">
+              <div className="text-center py-12 text-slate-500">
                 <Target className="w-12 h-12 mx-auto mb-3 opacity-50" />
                 <p>No analysis results yet</p>
                 <p className="text-sm">Select candidates and run analysis</p>
@@ -1067,7 +1067,7 @@ export const Analysis = () => {
                     checked={selectedResults.length === results.length && results.length > 0}
                     onCheckedChange={selectAllResults}
                   />
-                  <div className="grid grid-cols-[3fr_2fr_2fr_2fr_2fr_1fr_1fr] gap-4 flex-1 text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  <div className="grid grid-cols-[3fr_2fr_2fr_2fr_2fr_1fr_1fr] gap-4 flex-1 text-xs font-medium text-slate-600 uppercase tracking-wide">
                     <div>Candidate</div>
                     <div className="text-center">Score</div>
                     <div className="text-center">Character</div>
@@ -1098,10 +1098,10 @@ export const Analysis = () => {
                               <UserX className="w-4 h-4 text-red-400" />
                             )}
                             <div>
-                              <p className={`font-medium text-sm ${isCandidateDeleted(result) ? 'text-slate-400' : 'text-slate-900'}`}>
+                              <p className={`font-medium text-sm ${isCandidateDeleted(result) ? 'text-slate-500' : 'text-slate-900'}`}>
                                 {getCandidateName(result)}
                               </p>
-                              <p className="text-xs text-slate-400">
+                              <p className="text-xs text-slate-500">
                                 {new Date(result.created_at).toLocaleDateString()}
                               </p>
                             </div>
@@ -1172,7 +1172,7 @@ export const Analysis = () => {
             <div className="space-y-6 pt-4">
               {/* Overall Score */}
               <div className="text-center p-6 bg-slate-50 rounded-xl">
-                <p className="text-sm text-slate-500 mb-2">Overall Job Fit Score</p>
+                <p className="text-sm text-slate-600 mb-2">Overall Job Fit Score</p>
                 <p className={`text-5xl font-bold ${getScoreColor(detailModalResult.final_score)}`}>
                   {Math.round(detailModalResult.final_score)}%
                 </p>
@@ -1239,7 +1239,7 @@ export const Analysis = () => {
                                 {Math.round(item.score)}%
                               </span>
                             </div>
-                            <p className="text-xs text-slate-500">{item.reasoning}</p>
+                            <p className="text-xs text-slate-600">{item.reasoning}</p>
                           </div>
                         </div>
                       ))}
@@ -1274,11 +1274,11 @@ export const Analysis = () => {
                                 <div className="flex-1">
                                   <div className="flex items-center justify-between mb-1">
                                     <p className="text-sm font-medium">{item.item_name}</p>
-                                    <span className="text-xs text-slate-400">
+                                    <span className="text-xs text-slate-500">
                                       weight: {item.weight}
                                     </span>
                                   </div>
-                                  <p className="text-xs text-slate-500">{item.reasoning}</p>
+                                  <p className="text-xs text-slate-600">{item.reasoning}</p>
                                 </div>
                                 <span className={`text-sm font-bold ${getScoreColor(item.raw_score)}`}>
                                   {Math.round(item.raw_score)}%
@@ -1331,7 +1331,7 @@ export const Analysis = () => {
                 <div className="flex items-center justify-between">
                   <Label className="text-sm font-medium">Select Candidates</Label>
                   {pdfAvailableCandidates.length > 0 && (
-                    <span className="text-xs text-slate-500">
+                    <span className="text-xs text-slate-600">
                       {pdfAvailableCandidates.length} candidate(s) with analysis
                     </span>
                   )}
@@ -1340,10 +1340,10 @@ export const Analysis = () => {
                 {loadingPdfCandidates ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
-                    <span className="ml-2 text-sm text-slate-500">Loading candidates...</span>
+                    <span className="ml-2 text-sm text-slate-600">Loading candidates...</span>
                   </div>
                 ) : pdfAvailableCandidates.length === 0 ? (
-                  <div className="text-center py-8 text-slate-400">
+                  <div className="text-center py-8 text-slate-500">
                     <Users className="w-10 h-10 mx-auto mb-2 opacity-50" />
                     <p className="text-sm">No analysis results found for this job</p>
                     <p className="text-xs mt-1">Run analysis on candidates first</p>
@@ -1388,7 +1388,7 @@ export const Analysis = () => {
                           />
                           <div className="flex-1">
                             <p className="font-medium text-sm">{candidate.candidate_name}</p>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-600">
                               Analyzed: {new Date(candidate.created_at).toLocaleDateString()}
                             </p>
                           </div>
@@ -1405,7 +1405,7 @@ export const Analysis = () => {
 
             {/* Action Buttons */}
             <div className="flex items-center justify-between pt-4 border-t">
-              <p className="text-sm text-slate-500">
+              <p className="text-sm text-slate-600">
                 {selectedPdfCandidates.length} candidate(s) selected
               </p>
               <div className="flex gap-2">

@@ -17,7 +17,7 @@ export const EmptyState = ({
         </div>
       )}
       <h3 className="font-heading font-semibold text-lg text-slate-900 mb-2">{title}</h3>
-      <p className="text-slate-500 text-sm max-w-sm mb-6">{description}</p>
+      <p className="text-slate-600 text-sm max-w-sm mb-6">{description}</p>
       {actionLabel && onAction && (
         <Button 
           onClick={onAction}

@@ -84,7 +84,7 @@ export const Settings = () => {
                 </div>
               )}
             </div>
-            <p className="text-xs text-slate-500 mt-3">
+            <p className="text-xs text-slate-600 mt-3">
               Credits are used for AI-powered features like CV analysis, job description generation, and more.
               Contact admin to top up your credits.
             </p>
@@ -118,7 +118,7 @@ export const Settings = () => {
                     <SelectItem value="id">Indonesian (Bahasa Indonesia)</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-600">
                   This language will be used for the interface and AI-generated analysis results
                 </p>
               </div>

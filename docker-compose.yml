@@ -39,6 +39,8 @@ services:
       - ADMIN_JWT_SECRET=${ADMIN_JWT_SECRET:-aikrut-admin-secret-key-2024}
       - CORS_ORIGINS=${CORS_ORIGINS:-*}
       - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD}
+      - TEST_USER_EMAIL=${TEST_USER_EMAIL}
+      - TEST_USER_PASSWORD=${TEST_USER_PASSWORD}
     ports:
       - "8000:8000"
 

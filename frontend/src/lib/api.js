@@ -59,10 +59,11 @@ export const jobsAPI = {
   create: (data) => api.post('/jobs', data),
   update: (id, data) => api.put(`/jobs/${id}`, data),
   delete: (id) => api.delete(`/jobs/${id}`),
-  generateDescription: (title, context = '') => {
+  generateDescription: (title, context = '', mode = 'generate') => {
     const formData = new FormData();
     formData.append('title', title);
     formData.append('context', context);
+    formData.append('mode', mode);
     return api.post('/jobs/generate-description', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
@@ -73,7 +74,7 @@ export const jobsAPI = {
 // Candidates API
 export const candidatesAPI = {
   list: () => api.get('/candidates'),
-  search: (query = '', page = 1, limit = 20) => 
+  search: (query = '', page = 1, limit = 20) =>
     api.get('/candidates/search', { params: { q: query, page, limit } }),
   get: (id) => api.get(`/candidates/${id}`),
   create: (data) => api.post('/candidates', data),
@@ -108,7 +109,7 @@ export const candidatesAPI = {
     });
   },
   // Delete specific evidence from candidate
-  deleteEvidence: (candidateId, evidenceIndex) => 
+  deleteEvidence: (candidateId, evidenceIndex) =>
     api.delete(`/candidates/${candidateId}/evidence/${evidenceIndex}`),
   // Replace candidate (delete old, create new)
   replace: (oldCandidateId, newName, newEmail, newPhone, newEvidence) =>
@@ -122,13 +123,13 @@ export const candidatesAPI = {
   // Enhanced duplicate detection
   detectDuplicates: (data) => api.post('/candidates/detect-duplicates', data),
   // Merge candidates
-  merge: (sourceCandidateId, targetCandidateId) => 
-    api.post('/candidates/merge', { 
-      source_candidate_id: sourceCandidateId, 
-      target_candidate_id: targetCandidateId 
+  merge: (sourceCandidateId, targetCandidateId) =>
+    api.post('/candidates/merge', {
+      source_candidate_id: sourceCandidateId,
+      target_candidate_id: targetCandidateId
     }),
   // Get merge logs
-  getMergeLogs: (limit = 50) => 
+  getMergeLogs: (limit = 50) =>
     api.get('/candidates/merge-logs', { params: { limit } }),
   // Upload ZIP file
   uploadZip: (file, forceCreate = false) => {
@@ -141,16 +142,16 @@ export const candidatesAPI = {
   },
   // ==================== TALENT TAGGING ====================
   // Extract tags from candidate evidence using AI
-  extractTags: (candidateId) => 
+  extractTags: (candidateId) =>
     api.post(`/candidates/${candidateId}/extract-tags`),
   // Get candidate tags
-  getTags: (candidateId) => 
+  getTags: (candidateId) =>
     api.get(`/candidates/${candidateId}/tags`),
   // Add manual tag
-  addTag: (candidateId, tagValue, layer) => 
+  addTag: (candidateId, tagValue, layer) =>
     api.post(`/candidates/${candidateId}/tags`, { tag_value: tagValue, layer }),
   // Delete tag
-  deleteTag: (candidateId, tagValue, layer) => 
+  deleteTag: (candidateId, tagValue, layer) =>
     api.delete(`/candidates/${candidateId}/tags/${encodeURIComponent(tagValue)}`, { params: { layer } }),
   // Get tag library
   getTagLibrary: () => api.get('/tags/library'),

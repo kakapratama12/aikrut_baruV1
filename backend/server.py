@@ -111,11 +111,166 @@ async def create_indexes():
 
 # ==================== MODELS ====================
 
+from enum import Enum
+from pydantic import model_validator
+
+# --- HR ASSESSMENT OS MODELS (PHASE 1) ---
+
+class CompetencyType(str, Enum):
+    hard_skill = "hard_skill"
+    soft_skill = "soft_skill"
+
+class CompetencyLevel(BaseModel):
+    level: int  # 1-5
+    description: Optional[str] = ""
+
+class CompetencyCreate(BaseModel):
+    company_id: str
+    name: str
+    description: str
+    type: CompetencyType
+    levels: List[CompetencyLevel] = []
+
+class Competency(CompetencyCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str
+    updated_at: str
+
+class PositionCompetencyRequirement(BaseModel):
+    competency_id: str
+    rubric_id: Optional[str] = None
+    standard_minimum: int  # 1-5
+    weight_evidence: int   # %
+    weight_roleplay: int   # %
+
+class PositionCreate(BaseModel):
+    company_id: str
+    title: str
+    department: str
+    level: int  # 1-6
+    required_competencies: List[PositionCompetencyRequirement] = []
+
+class Position(PositionCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str
+    updated_at: str
+
+class EvaluationRubricCreate(BaseModel):
+    company_id: str
+    name: str
+    evidence_mapping: List[Dict[str, Any]] = []
+    roleplay_mapping: List[Dict[str, Any]] = []
+
+class EvaluationRubric(EvaluationRubricCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str
+    updated_at: str
+
+class EmploymentType(str, Enum):
+    internal = "internal"
+    external = "external"
+
+class EmployeeCreate(BaseModel):
+    company_id: str
+    name: str
+    email: str
+    current_position: str
+    employment_type: EmploymentType = EmploymentType.internal
+    status: str = "aktif"
+
+class Employee(EmployeeCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str
+    updated_at: str
+
+class AssessmentStatus(str, Enum):
+    pending = "pending"
+    in_progress = "in_progress"
+    completed = "completed"
+    pending_review = "pending_review"
+    approved = "approved"
+    overridden = "overridden"
+    request_more_info = "request_more_info"
+
+class AssessmentPurpose(str, Enum):
+    promotion = "promotion"
+    hiring = "hiring"
+
+class AIRecommendation(str, Enum):
+    promote = "promote"
+    hire = "hire"
+    not_yet = "not_yet"
+    no = "no"
+
+class FinalOutcome(str, Enum):
+    promoted = "promoted"
+    hired = "hired"
+    not_yet = "not_yet"
+    no = "no"
+
+class AssessmentSessionCreate(BaseModel):
+    company_id: str
+    person_id: str
+    target_position_id: str
+    purpose: AssessmentPurpose
+
+class AssessmentSession(AssessmentSessionCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: AssessmentStatus = AssessmentStatus.pending
+    reviewer_id: Optional[str] = None
+    reviewer_notes: Optional[str] = None
+    ai_recommendation: Optional[AIRecommendation] = None
+    override_reason: Optional[str] = None
+    final_outcome: Optional[FinalOutcome] = None
+    credits_consumed: int = 0
+    created_at: str
+    decided_at: Optional[str] = None
+
+    @model_validator(mode='after')
+    def validate_override_reason(self) -> 'AssessmentSession':
+        if self.final_outcome is not None and self.ai_recommendation is not None:
+            # Normalize semantics for comparison 
+            # (e.g. promote -> promoted, hire -> hired)
+            mapping = {
+                "promote": "promoted",
+                "hire": "hired",
+                "not_yet": "not_yet",
+                "no": "no"
+            }
+            if mapping.get(self.ai_recommendation.value) != self.final_outcome.value:
+                if not self.override_reason or not self.override_reason.strip():
+                    raise ValueError("override_reason is required when final_outcome differs from ai_recommendation")
+        return self
+
+class CompetencyProfileCreate(BaseModel):
+    session_id: str
+    person_id: str
+    company_id: str
+    competency_scores: List[Dict[str, Any]] = []
+    raw_evidence: Dict[str, Any] = {}
+    raw_roleplay: Dict[str, Any] = {}
+    narrative: Dict[str, Any] = {}
+
+class CompetencyProfile(CompetencyProfileCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    created_at: str
+    updated_at: str
+
+# --- LEGACY MODELS (DEPRECATED) ---
+
 # Auth Models
+class UserRole(str, Enum):
+    hr_admin = "hr_admin"
+    manager = "manager"
+    viewer = "viewer"
+    employee = "employee"
+
 class UserCreate(BaseModel):
     email: EmailStr
     password: str
     name: str
+    role: UserRole = UserRole.hr_admin
+    is_platform_admin: bool = False
 
 class UserLogin(BaseModel):
     email: EmailStr
@@ -126,6 +281,8 @@ class UserResponse(BaseModel):
     email: str
     name: str
     company_id: Optional[str] = None
+    role: UserRole = UserRole.hr_admin
+    is_platform_admin: bool = False
     created_at: str
     is_approved: Optional[bool] = False
     is_active: Optional[bool] = False
@@ -388,11 +545,24 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
             user["is_approved"] = True
             user["is_active"] = True
             user["credits"] = 0.0
+            user["role"] = UserRole.hr_admin.value
+            user["is_platform_admin"] = False
             # Update in database for future
             await db.users.update_one(
                 {"id": user_id}, 
-                {"$set": {"is_approved": True, "is_active": True, "credits": 0.0}}
+                {"$set": {
+                    "is_approved": True, 
+                    "is_active": True, 
+                    "credits": 0.0,
+                    "role": UserRole.hr_admin.value,
+                    "is_platform_admin": False
+                }}
             )
+        
+        # Ensure role exists even if is_approved check was bypassed by older logic
+        if "role" not in user:
+            user["role"] = UserRole.hr_admin.value
+            user["is_platform_admin"] = False
         
         # Check if user is approved and active (only for new users)
         if not user.get("is_approved", True):
@@ -405,6 +575,80 @@ async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(s
         raise HTTPException(status_code=401, detail="Token expired")
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+def RequireRole(*allowed_roles: UserRole):
+    async def role_checker(current_user: dict = Depends(get_current_user)):
+        is_platform_admin = current_user.get("is_platform_admin", False)
+        if is_platform_admin:
+            return current_user  # platform admin bypasses all role checks
+            
+        role_str = current_user.get("role", UserRole.hr_admin.value)
+        try:
+            role = UserRole(role_str)
+        except ValueError:
+            role = UserRole.hr_admin # Fallback against corrupted data
+            
+        if role not in allowed_roles:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Access denied. Required roles: {[r.value for r in allowed_roles]}"
+            )
+        return current_user
+    return role_checker
+
+def get_company_id(current_user: dict) -> str:
+    """Extract and validate company_id from the authenticated user.
+    
+    This is the SINGLE SOURCE OF TRUTH for tenant isolation.
+    All endpoints must use this instead of query params or request body.
+    """
+    company_id = current_user.get("company_id")
+    if not company_id:
+        raise HTTPException(
+            status_code=403, 
+            detail="No company assigned. Please contact your administrator."
+        )
+    return company_id
+
+# ==================== MULTI-TENANT ADMIN MODELS ====================
+
+class AdminCompanyCreate(BaseModel):
+    name: str
+    description: Optional[str] = ""
+    industry: Optional[str] = ""
+    website: Optional[str] = ""
+    subscription_tier: str = "free"  # free | pro | enterprise
+    credits_balance: float = 0.0
+    expiry_date: Optional[str] = None
+
+class AdminCompanyUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    industry: Optional[str] = None
+    website: Optional[str] = None
+    subscription_tier: Optional[str] = None
+    credits_balance: Optional[float] = None
+    expiry_date: Optional[str] = None
+    is_active: Optional[bool] = None
+
+class AdminCompanyResponse(BaseModel):
+    id: str
+    name: str
+    description: str = ""
+    industry: str = ""
+    website: str = ""
+    values: List[CompanyValue] = []
+    subscription_tier: str = "free"
+    credits_balance: float = 0.0
+    expiry_date: Optional[str] = None
+    is_active: bool = True
+    created_at: str
+    updated_at: str
+
+class ApproveUserRequest(BaseModel):
+    company_id: str
+    role: UserRole
+    credits: float = 100.0
 
 # ==================== ADMIN AUTH HELPERS ====================
 
@@ -1213,19 +1457,28 @@ async def update_user_by_admin(
 @api_router.post("/admin/users/{user_id}/approve")
 async def approve_user(
     user_id: str,
-    default_credits: float = 100.0,
+    request: ApproveUserRequest,
     admin: dict = Depends(get_current_admin)
 ):
     user = await db.users.find_one({"id": user_id}, {"_id": 0})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
+    # Validate company exists and is active
+    company = await db.companies.find_one({"id": request.company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    if not company.get("is_active", True):
+        raise HTTPException(status_code=400, detail="Company is inactive")
+    
     await db.users.update_one(
         {"id": user_id},
         {"$set": {
             "is_approved": True,
             "is_active": True,
-            "credits": default_credits
+            "company_id": request.company_id,
+            "role": request.role.value,
+            "credits": request.credits
         }}
     )
     
@@ -1251,6 +1504,90 @@ async def reject_user(
     
     updated_user = await db.users.find_one({"id": user_id}, {"_id": 0, "password": 0})
     return {"message": "User rejected", "user": updated_user}
+
+# ==================== SUPER ADMIN: COMPANY MANAGEMENT ====================
+
+@api_router.post("/admin/companies", response_model=AdminCompanyResponse)
+async def admin_create_company(
+    data: AdminCompanyCreate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Create a new company (Super Admin only)."""
+    company_id = str(uuid.uuid4())
+    now = datetime.now(timezone.utc).isoformat()
+    
+    company = {
+        "id": company_id,
+        "name": data.name,
+        "description": data.description or "",
+        "industry": data.industry or "",
+        "website": data.website or "",
+        "values": [],
+        "subscription_tier": data.subscription_tier,
+        "credits_balance": data.credits_balance,
+        "expiry_date": data.expiry_date,
+        "is_active": True,
+        "created_at": now,
+        "updated_at": now
+    }
+    
+    await db.companies.insert_one(company)
+    return AdminCompanyResponse(**company)
+
+@api_router.get("/admin/companies")
+async def admin_list_companies(
+    admin: dict = Depends(get_current_admin)
+):
+    """List all companies (Super Admin only)."""
+    cursor = db.companies.find({}, {"_id": 0})
+    companies = await cursor.to_list(1000)
+    return {"companies": companies, "total": len(companies)}
+
+@api_router.get("/admin/companies/{company_id}", response_model=AdminCompanyResponse)
+async def admin_get_company(
+    company_id: str,
+    admin: dict = Depends(get_current_admin)
+):
+    """Get company detail (Super Admin only)."""
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    return AdminCompanyResponse(**company)
+
+@api_router.put("/admin/companies/{company_id}", response_model=AdminCompanyResponse)
+async def admin_update_company(
+    company_id: str,
+    data: AdminCompanyUpdate,
+    admin: dict = Depends(get_current_admin)
+):
+    """Update company details (Super Admin only)."""
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
+    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
+    
+    await db.companies.update_one({"id": company_id}, {"$set": update_data})
+    
+    updated = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    return AdminCompanyResponse(**updated)
+
+@api_router.delete("/admin/companies/{company_id}")
+async def admin_deactivate_company(
+    company_id: str,
+    admin: dict = Depends(get_current_admin)
+):
+    """Soft-delete: deactivate a company (Super Admin only)."""
+    company = await db.companies.find_one({"id": company_id}, {"_id": 0})
+    if not company:
+        raise HTTPException(status_code=404, detail="Company not found")
+    
+    await db.companies.update_one(
+        {"id": company_id},
+        {"$set": {"is_active": False, "updated_at": datetime.now(timezone.utc).isoformat()}}
+    )
+    return {"message": f"Company {company_id} deactivated"}
 
 # Admin Settings Models
 class GlobalSettingsUpdate(BaseModel):
@@ -1384,27 +1721,11 @@ async def get_global_ai_settings() -> dict:
 
 @api_router.post("/company", response_model=CompanyResponse)
 async def create_company(data: CompanyCreate, current_user: dict = Depends(get_current_user)):
-    if current_user.get("company_id"):
-        raise HTTPException(status_code=400, detail="User already has a company")
-    
-    company_id = str(uuid.uuid4())
-    now = datetime.now(timezone.utc).isoformat()
-    
-    company = {
-        "id": company_id,
-        "name": data.name,
-        "description": data.description or "",
-        "industry": data.industry or "",
-        "website": data.website or "",
-        "values": [v.model_dump() for v in data.values],
-        "created_at": now,
-        "updated_at": now
-    }
-    
-    await db.companies.insert_one(company)
-    await db.users.update_one({"id": current_user["id"]}, {"$set": {"company_id": company_id}})
-    
-    return CompanyResponse(**company)
+    """DEPRECATED: Company creation is now admin-managed only. Use /api/admin/companies."""
+    raise HTTPException(
+        status_code=410,
+        detail="Self-service company creation has been disabled. Contact your platform administrator."
+    )
 
 @api_router.get("/company", response_model=Optional[CompanyResponse])
 async def get_company(current_user: dict = Depends(get_current_user)):
@@ -1419,18 +1740,11 @@ async def get_company(current_user: dict = Depends(get_current_user)):
 
 @api_router.put("/company", response_model=CompanyResponse)
 async def update_company(data: CompanyUpdate, current_user: dict = Depends(get_current_user)):
-    if not current_user.get("company_id"):
-        raise HTTPException(status_code=404, detail="No company found")
-    
-    update_data = {k: v for k, v in data.model_dump().items() if v is not None}
-    if "values" in update_data:
-        update_data["values"] = [v.model_dump() if hasattr(v, 'model_dump') else v for v in update_data["values"]]
-    update_data["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
-    await db.companies.update_one({"id": current_user["company_id"]}, {"$set": update_data})
-    
-    company = await db.companies.find_one({"id": current_user["company_id"]}, {"_id": 0})
-    return CompanyResponse(**company)
+    """DEPRECATED: Company updates are now admin-managed only. Use /api/admin/companies/{id}."""
+    raise HTTPException(
+        status_code=410,
+        detail="Self-service company updates have been disabled. Contact your platform administrator."
+    )
 
 @api_router.post("/company/generate-values")
 async def generate_company_values(narrative: str = Form(...), current_user: dict = Depends(get_current_user)):
@@ -1565,7 +1879,7 @@ async def delete_job(job_id: str, current_user: dict = Depends(get_current_user)
     return {"message": "Job deleted"}
 
 @api_router.post("/jobs/generate-description")
-async def generate_job_description(title: str = Form(...), context: str = Form(""), current_user: dict = Depends(get_current_user)):
+async def generate_job_description(title: str = Form(...), context: str = Form(""), mode: str = Form("generate"), current_user: dict = Depends(get_current_user)):
     # Check credits first
     credit_check = await check_user_credits(current_user["id"])
     if not credit_check.has_credits:
@@ -1577,40 +1891,33 @@ async def generate_job_description(title: str = Form(...), context: str = Form("
     
     lang_instruction = "Write in English." if user_settings.language == "en" else "Write in Indonesian (Bahasa Indonesia)."
     
+    mode_instruction = ""
+    if mode == "improve":
+        mode_instruction = "- REVISION MODE: Improve the existing context to be more professional, structured, and impactful."
+    elif mode == "concise":
+        mode_instruction = "- REVISION MODE: Make the existing context significantly more concise and brief, removing fluff."
+    elif mode == "detailed":
+        mode_instruction = "- REVISION MODE: Expand the existing context to be much more detailed, covering all possible sub-responsibilities and technical depths."
+
     if context.strip():
         # Generate based on narrative
-        system_prompt = f"""Based on the job description narrative provided by the user, generate a structured job description and requirements.
+        system_prompt = f"""Based on the job description narrative provided by the user, generate a professional job description and requirements.
 
 Job Title: {title}
 
 {lang_instruction}
 
 GUIDELINES:
-- Use EXACT section structure. Divide into proper sections.
-- Do NOT add extra sections. Do NOT change section names.
+{mode_instruction}
 - Do NOT use emojis.
-- Use consistent bullet formatting:
-  Main bullets use numbers such as "1.", "2.", "3."
-  Sub-bullets use two-space indent + "-"
 - Keep professional HR tone. No unnecessary repetition.
-- Maximum 4–6 bullets per subsection.
-- Use concise, clear sentences (no paragraphs longer than 3 lines).
-- Free Narrative Rule: Extract competencies from narrative, infer job title if not explicitly stated, expand into structured HR-ready job description, keep tone formal and professional.
+- Use concise, clear sentences.
+- Free Narrative Rule: Extract competencies from narrative, infer job title if not explicitly stated, expand into professional HR-ready job description, keep tone formal and professional.
 
-Return a JSON object with this exact structure (do NOT use arrays, just return the raw text blocks with newlines explicitly embedded where necessary, but keep the JSON keys separate):
+Return a JSON object with this exact structure (do NOT use nested objects, just return formatted strings with explicit newlines `\\n`):
 {{
-  "job_title": "{title}",
-  "description": {{
-    "about_the_role": "2-4 narrative sentences explaining role...",
-    "key_responsibilities": "2-4 narrative sentences...\\n\\n1. First responsibility\\n  - Sub-detail\\n2. Second responsibility",
-    "what_you_will_do": "2-4 narrative sentences...\\n\\n1. First thing\\n2. Second thing"
-  }},
-  "requirements": {{
-    "required_experience": "2-4 narrative sentences...\\n\\n1. First experience requirement",
-    "required_skills": "2-4 narrative sentences...\\n\\n1. First skill",
-    "qualifications": "2-4 narrative sentences...\\n\\n1. First qualification",
-    "nice_to_have": "2-4 narrative sentences...\\n\\n1. First nice-to-have"
-  }}
+  "description": "The full professional job description text, including About the Role and Responsibilities, formatted with newlines and bullet points.",
+  "requirements": "The full professional job requirements text, including Experience, Skills, and Qualifications, formatted with newlines and bullet points."
 }}"""
         
         messages = [
@@ -1619,36 +1926,21 @@ Return a JSON object with this exact structure (do NOT use arrays, just return t
         ]
     else:
         # Generate based on title only
-        system_prompt = f"""Generate a structured job description and requirements for the position: {title}
+        system_prompt = f"""Generate a professional job description and requirements for the position: {title}
 
 {lang_instruction}
 
 GUIDELINES:
-- Use EXACT section structure. Divide into proper sections.
-- Do NOT add extra sections. Do NOT change section names.
+{mode_instruction}
 - Do NOT use emojis.
-- Use consistent bullet formatting:
-  Main bullets use numbers such as "1.", "2.", "3."
-  Sub-bullets use two-space indent + "-"
 - Keep professional HR tone. No unnecessary repetition.
-- Maximum 4–6 bullets per subsection.
-- Use concise, clear sentences (no paragraphs longer than 3 lines).
+- Use concise, clear sentences.
 - Job Title Only Rule: Infer industry-standard responsibilities, infer realistic experience requirements, generate professional-level content.
 
-Return a JSON object with this exact structure (do NOT use arrays, just return the raw text blocks with newlines explicitly embedded where necessary, but keep the JSON keys separate):
+Return a JSON object with this exact structure (do NOT use nested objects, just return formatted strings with explicit newlines `\\n`):
 {{
-  "job_title": "{title}",
-  "description": {{
-    "about_the_role": "2-4 narrative sentences explaining role...",
-    "key_responsibilities": "2-4 narrative sentences...\\n\\n1. First responsibility\\n  - Sub-detail\\n2. Second responsibility",
-    "what_you_will_do": "2-4 narrative sentences...\\n\\n1. First thing\\n2. Second thing"
-  }},
-  "requirements": {{
-    "required_experience": "2-4 narrative sentences...\\n\\n1. First experience requirement",
-    "required_skills": "2-4 narrative sentences...\\n\\n1. First skill",
-    "qualifications": "2-4 narrative sentences...\\n\\n1. First qualification",
-    "nice_to_have": "2-4 narrative sentences...\\n\\n1. First nice-to-have"
-  }}
+  "description": "The full professional job description text, including About the Role and Responsibilities, formatted with newlines and bullet points.",
+  "requirements": "The full professional job requirements text, including Experience, Skills, and Qualifications, formatted with newlines and bullet points."
 }}"""
 
         messages = [{"role": "system", "content": system_prompt}]
@@ -1678,64 +1970,33 @@ Return a JSON object with this exact structure (do NOT use arrays, just return t
             json_str = response[json_start:json_end]
             try:
                 data = json.loads(json_str)
-                # Ensure the expected structure exists even if AI missed something
-                description = data.get("description", {})
-                requirements = data.get("requirements", {})
+                description = data.get("description", "")
+                requirements = data.get("requirements", "")
                 
-                if isinstance(description, str):
-                    description = {"about_the_role": description}
-                if isinstance(requirements, str):
-                    requirements = {"required_experience": requirements}
-
-                # Ensure all nested keys exist
-                structured_description = {
-                    "about_the_role": description.get("about_the_role", ""),
-                    "key_responsibilities": description.get("key_responsibilities", ""),
-                    "what_you_will_do": description.get("what_you_will_do", "")
-                }
-                
-                structured_requirements = {
-                    "required_experience": requirements.get("required_experience", ""),
-                    "required_skills": requirements.get("required_skills", ""),
-                    "qualifications": requirements.get("qualifications", ""),
-                    "nice_to_have": requirements.get("nice_to_have", "")
-                }
+                if isinstance(description, dict):
+                    # Fallback if AI somehow still gave dict
+                    # Just convert it to string
+                    description = "\\n\\n".join([f"{k.replace('_', ' ').title()}:\\n{v}" for k, v in description.items()])
+                if isinstance(requirements, dict):
+                    requirements = "\\n\\n".join([f"{k.replace('_', ' ').title()}:\\n{v}" for k, v in requirements.items()])
                 
                 return {
-                    "description": structured_description,
-                    "requirements": structured_requirements
+                    "description": description,
+                    "requirements": requirements
                 }
             except json.JSONDecodeError:
                 pass
                 
         # Default fallback if JSON parsing fails entirely
         return {
-            "description": {
-                "about_the_role": response,
-                "key_responsibilities": "",
-                "what_you_will_do": ""
-            },
-            "requirements": {
-                "required_experience": "",
-                "required_skills": "",
-                "qualifications": "",
-                "nice_to_have": ""
-            }
+            "description": response,
+            "requirements": ""
         }
     except Exception as e:
         logger.error(f"Error parsing job description response: {e}")
         return {
-            "description": {
-                "about_the_role": "Failed to generate description structure.",
-                "key_responsibilities": "",
-                "what_you_will_do": ""
-            },
-            "requirements": {
-                "required_experience": "",
-                "required_skills": "",
-                "qualifications": "",
-                "nice_to_have": ""
-            }
+            "description": "Failed to generate description.",
+            "requirements": "Failed to generate requirements."
         }
 
 @api_router.post("/jobs/{job_id}/generate-playbook")
@@ -3618,48 +3879,43 @@ async def generate_pdf_report(request: PDFReportRequest, current_user: dict = De
     story.append(Paragraph("<b>Job Details</b>", title_style))
     story.append(Spacer(1, 0.2*inch))
     
-    def render_nested_json(data_dict, title_mapping):
-        for key, value in data_dict.items():
-            if not value:
-                continue
-            # Format header
-            header_text = title_mapping.get(key, key.replace('_', ' ').title())
-            story.append(Paragraph(f"<b>{header_text}</b>", heading_style))
+    def render_playbook_category(category_name, items):
+        if not items:
+            return
+        
+        # Category header
+        story.append(Paragraph(f"<b>{category_name.title()} Criteria</b>", heading_style))
+        story.append(Spacer(1, 0.1*inch))
+        
+        # Category items
+        for item in items:
+            name = item.get('name', '')
+            desc = item.get('description', '')
+            weight = item.get('weight', 0)
             
-            # Format content
-            html_content = str(value).replace('\n', '<br/>')
-            story.append(Paragraph(html_content, normal_style))
-            story.append(Spacer(1, 0.15*inch))
+            # Formatted list item
+            item_text = f"• <b>{name}</b> ({weight}%): {desc}"
+            # Render using standard paragraph style with indent if needed
+            story.append(Paragraph(item_text, normal_style))
+            story.append(Spacer(1, 0.05*inch))
+        
+        story.append(Spacer(1, 0.2*inch))
 
-    story.append(Paragraph("<b>Job Description:</b>", title_style))
-    story.append(Spacer(1, 0.15*inch))
-    
-    desc_data = job.get('description', {})
-    if isinstance(desc_data, dict):
-        render_nested_json(desc_data, {
-            'about_the_role': 'About the Role',
-            'key_responsibilities': 'Key Responsibilities',
-            'what_you_will_do': "What You'll Do"
-        })
-    else:
-        desc_html = str(desc_data).replace('\n', '<br/>')
-        story.append(Paragraph(desc_html, normal_style))
+    playbook = job.get('playbook', {})
+    if playbook:
+        story.append(Paragraph("<b>Evaluation Playbook:</b>", title_style))
         story.append(Spacer(1, 0.15*inch))
         
-    story.append(Paragraph("<b>Requirements:</b>", title_style))
-    story.append(Spacer(1, 0.15*inch))
-    
-    req_data = job.get('requirements', {})
-    if isinstance(req_data, dict):
-        render_nested_json(req_data, {
-            'required_experience': 'Required Experience',
-            'required_skills': 'Required Skills',
-            'qualifications': 'Qualifications',
-            'nice_to_have': 'Nice-to-Haves'
-        })
+        if playbook.get('requirement'):
+            render_playbook_category('Requirement', playbook['requirement'])
+            
+        if playbook.get('skill'):
+            render_playbook_category('Skill', playbook['skill'])
+            
+        if playbook.get('character'):
+            render_playbook_category('Character', playbook['character'])
     else:
-        req_html = str(req_data).replace('\n', '<br/>')
-        story.append(Paragraph(req_html, normal_style))
+        story.append(Paragraph("<i>No evaluation criteria defined for this position.</i>", normal_style))
     
     story.append(PageBreak())
     
@@ -4700,6 +4956,455 @@ def categorize_evidence(filename: str) -> str:
         return 'reference'
     else:
         return 'other'
+# ==================== PHASE 1: COMPETENCY LIBRARY ====================
+
+@api_router.post("/competencies", response_model=Competency)
+async def create_competency(
+    comp: CompetencyCreate,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+        
+    if len(comp.levels) != 5:
+        raise HTTPException(status_code=400, detail="A competency must have exactly 5 levels (1-5).")
+        
+    sorted_levels = sorted(comp.levels, key=lambda x: x.level)
+    for i, level in enumerate(sorted_levels):
+        if level.level != i + 1:
+            raise HTTPException(status_code=400, detail="Competency levels must be exactly 1, 2, 3, 4, and 5.")
+            
+    now = datetime.now(timezone.utc).isoformat()
+    comp_data = comp.model_dump()
+    comp_data["company_id"] = company_id  # Override from token
+    comp_obj = Competency(**comp_data, created_at=now, updated_at=now)
+    await db.competencies.insert_one(comp_obj.model_dump())
+    return comp_obj
+
+@api_router.get("/competencies", response_model=List[Competency])
+async def list_competencies(
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin, UserRole.manager, UserRole.viewer))
+):
+    company_id = get_company_id(current_user)
+    cursor = db.competencies.find({"company_id": company_id})
+    return [Competency(**doc) async for doc in cursor]
+
+@api_router.get("/competencies/{comp_id}", response_model=Competency)
+async def get_competency(
+    comp_id: str,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin, UserRole.manager, UserRole.viewer))
+):
+    company_id = get_company_id(current_user)
+    doc = await db.competencies.find_one({"id": comp_id, "company_id": company_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Competency not found")
+    return Competency(**doc)
+
+@api_router.put("/competencies/{comp_id}", response_model=Competency)
+async def update_competency(
+    comp_id: str,
+    comp_update: CompetencyCreate,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+    
+    if len(comp_update.levels) != 5:
+        raise HTTPException(status_code=400, detail="A competency must have exactly 5 levels (1-5).")
+        
+    sorted_levels = sorted(comp_update.levels, key=lambda x: x.level)
+    for i, level in enumerate(sorted_levels):
+        if level.level != i + 1:
+            raise HTTPException(status_code=400, detail="Competency levels must be exactly 1, 2, 3, 4, and 5.")
+            
+    result = await db.competencies.update_one(
+        {"id": comp_id, "company_id": company_id},
+        {"$set": {
+            "name": comp_update.name,
+            "description": comp_update.description,
+            "type": comp_update.type.value,
+            "levels": [lvl.model_dump() for lvl in comp_update.levels],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Competency not found")
+        
+    doc = await db.competencies.find_one({"id": comp_id, "company_id": company_id})
+    return Competency(**doc)
+
+@api_router.delete("/competencies/{comp_id}")
+async def delete_competency(
+    comp_id: str,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+    result = await db.competencies.delete_one({"id": comp_id, "company_id": company_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Competency not found")
+    return {"message": "Competency deleted successfully"}
+
+@api_router.post("/competencies/seed")
+async def seed_competencies(
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    """Seed the database with a default PLN/Astra competency template."""
+    company_id = get_company_id(current_user)
+    existing_count = await db.competencies.count_documents({"company_id": company_id})
+    if existing_count > 0:
+        return {"message": "Company already has competencies. Skipping seed.", "seeded": 0}
+        
+    template = [
+        {
+            "name": "Analytical Thinking",
+            "description": "Kemampuan menganalisis situasi kompleks dan mengambil keputusan logis.",
+            "type": "hard_skill",
+            "levels": [
+                {"level": 1, "description": "Membutuhkan panduan untuk menganalisis masalah sederhana."},
+                {"level": 2, "description": "Menganalisis masalah sederhana secara mandiri."},
+                {"level": 3, "description": "Menganalisis masalah kompleks dan mengidentifikasi akar penyebab."},
+                {"level": 4, "description": "Mengantisipasi masalah kompleks dan merancang strategi preventif."},
+                {"level": 5, "description": "Menciptakan kerangka analitis baru untuk organisasi."}
+            ]
+        },
+        {
+            "name": "Effective Communication",
+            "description": "Kemampuan mengartikulasikan ide dengan jelas dan mendengarkan secara aktif.",
+            "type": "soft_skill",
+            "levels": [
+                {"level": 1, "description": "Kesulitan mengartikulasikan pikiran dengan jelas."},
+                {"level": 2, "description": "Mengomunikasikan ide dasar dengan cukup baik."},
+                {"level": 3, "description": "Mengomunikasikan ide kompleks secara jelas dan mendengarkan saran."},
+                {"level": 4, "description": "Mampu mempersuasi dan memengaruhi orang lain secara efektif."},
+                {"level": 5, "description": "Negosiator dan orator ulung di tingkat strategis/eksekutif."}
+            ]
+        },
+        {
+            "name": "Achievement Orientation",
+            "description": "Dorongan untuk bekerja dengan baik atau melampaui standar prestasi yang ditetapkan.",
+            "type": "soft_skill",
+            "levels": [
+                {"level": 1, "description": "Bekerja sekadar memenuhi target minimal."},
+                {"level": 2, "description": "Bekerja melampaui target yang ditetapkan sendiri."},
+                {"level": 3, "description": "Meningkatkan performansi untuk efisiensi sistem."},
+                {"level": 4, "description": "Menetapkan dan mencapai tujuan menantang bagi unit kerjanya."},
+                {"level": 5, "description": "Membuat keputusan bisnis berisiko demi pertumbuhan organisasi."}
+            ]
+        }
+    ]
+    
+    seeded_count = 0
+    now = datetime.now(timezone.utc).isoformat()
+    for comp_data in template:
+        comp_id = str(uuid.uuid4())
+        levels = [CompetencyLevel(**lvl) for lvl in comp_data["levels"]]
+        comp_obj = Competency(
+            id=comp_id,
+            company_id=company_id,
+            name=comp_data["name"],
+            description=comp_data["description"],
+            type=CompetencyType(comp_data["type"]),
+            levels=levels,
+            created_at=now,
+            updated_at=now
+        )
+        await db.competencies.insert_one(comp_obj.model_dump())
+        seeded_count += 1
+        
+    return {
+        "message": f"Seed successful for company {company_id}", 
+        "seeded": seeded_count,
+        "template": "PLN/Astra Default Core"
+    }
+
+# ==================== PHASE 1: POSITIONS ====================
+
+@api_router.post("/positions", response_model=Position)
+async def create_position(
+    pos: PositionCreate,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+        
+    now = datetime.now(timezone.utc).isoformat()
+    pos_id = str(uuid.uuid4())
+    pos_data = pos.model_dump()
+    pos_data["company_id"] = company_id  # Override from token
+    pos_obj = Position(
+        id=pos_id,
+        **pos_data,
+        created_at=now,
+        updated_at=now
+    )
+    await db.positions.insert_one(pos_obj.model_dump())
+    return pos_obj
+
+@api_router.get("/positions", response_model=List[Position])
+async def list_positions(
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin, UserRole.manager, UserRole.viewer))
+):
+    company_id = get_company_id(current_user)
+    cursor = db.positions.find({"company_id": company_id})
+    return [Position(**doc) async for doc in cursor]
+
+@api_router.get("/positions/{pos_id}", response_model=Position)
+async def get_position(
+    pos_id: str,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin, UserRole.manager, UserRole.viewer))
+):
+    company_id = get_company_id(current_user)
+    doc = await db.positions.find_one({"id": pos_id, "company_id": company_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Position not found")
+    return Position(**doc)
+
+@api_router.put("/positions/{pos_id}", response_model=Position)
+async def update_position(
+    pos_id: str,
+    pos_update: PositionCreate,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+    # This fully replaces required_competencies array
+    result = await db.positions.update_one(
+        {"id": pos_id, "company_id": company_id},
+        {"$set": {
+            "title": pos_update.title,
+            "department": pos_update.department,
+            "level": pos_update.level,
+            "required_competencies": [comp.model_dump() for comp in pos_update.required_competencies],
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Position not found")
+        
+    doc = await db.positions.find_one({"id": pos_id, "company_id": company_id})
+    return Position(**doc)
+
+@api_router.delete("/positions/{pos_id}")
+async def delete_position(
+    pos_id: str,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+    result = await db.positions.delete_one({"id": pos_id, "company_id": company_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Position not found")
+    return {"message": "Position deleted successfully"}
+
+@api_router.post("/positions/seed")
+async def seed_positions(
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    """Seed the database with default positions (Golongan 1-6) using existing competencies."""
+    company_id = get_company_id(current_user)
+    
+    # 1. Dependency check: competencies must exist
+    comps_cursor = db.competencies.find({"company_id": company_id})
+    competencies = [Competency(**doc) async for doc in comps_cursor]
+    
+    if not competencies:
+        raise HTTPException(status_code=400, detail="Cannot seed positions. No competencies found for this company. Seed competencies first.")
+        
+    # 2. Idempotency check: skip if positions already exist
+    existing_count = await db.positions.count_documents({"company_id": company_id})
+    if existing_count > 0:
+        return {"message": "Company already has positions. Skipping seed.", "seeded": 0}
+        
+    # 3. Create positions Golongan 1 to 6
+    seeded_count = 0
+    now = datetime.now(timezone.utc).isoformat()
+    
+    positions_data = [
+        {"title": "Staff / Pelaksana", "level": 1, "department": "General"},
+        {"title": "Supervisor Dasar", "level": 2, "department": "General"},
+        {"title": "Supervisor Lanjutan", "level": 3, "department": "General"},
+        {"title": "Manajer Dasar", "level": 4, "department": "General"},
+        {"title": "Manajer Menengah", "level": 5, "department": "General"},
+        {"title": "Manajer Atas / Eksekutif", "level": 6, "department": "General"}
+    ]
+    
+    demo_samples = []
+    
+    for pos_info in positions_data:
+        # Calculate standard minimum based on level
+        lvl = pos_info["level"]
+        std_min = min(lvl, 5) # Cap at level 5
+        
+        req_comps = []
+        for comp in competencies:
+            req_comps.append(
+                PositionCompetencyRequirement(
+                    competency_id=comp.id,
+                    rubric_id=None,
+                    standard_minimum=std_min,
+                    weight_evidence=50,
+                    weight_roleplay=50
+                )
+            )
+            
+        pos_id = str(uuid.uuid4())
+        pos_obj = Position(
+            id=pos_id,
+            company_id=company_id,
+            title=pos_info["title"],
+            department=pos_info["department"],
+            level=lvl,
+            required_competencies=req_comps,
+            created_at=now,
+            updated_at=now
+        )
+        await db.positions.insert_one(pos_obj.model_dump())
+        seeded_count += 1
+        
+        if lvl in [1, 6]:
+            demo_samples.append(pos_obj.model_dump())
+        
+    return {
+        "message": f"Seed successful for company {company_id}",
+        "seeded": seeded_count,
+        "template": "Golongan 1-6 Core",
+        "demo_samples": demo_samples
+    }
+
+# ==================== PHASE 1: EVALUATION RUBRICS ====================
+
+@api_router.post("/rubrics", response_model=EvaluationRubric)
+async def create_rubric(
+    rubric: EvaluationRubricCreate,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+        
+    now = datetime.now(timezone.utc).isoformat()
+    rubric_id = str(uuid.uuid4())
+    rubric_data = rubric.model_dump()
+    rubric_data["company_id"] = company_id  # Override from token
+    rubric_obj = EvaluationRubric(
+        id=rubric_id,
+        **rubric_data,
+        created_at=now,
+        updated_at=now
+    )
+    await db.evaluation_rubrics.insert_one(rubric_obj.model_dump())
+    return rubric_obj
+
+@api_router.get("/rubrics", response_model=List[EvaluationRubric])
+async def list_rubrics(
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin, UserRole.manager, UserRole.viewer))
+):
+    company_id = get_company_id(current_user)
+    cursor = db.evaluation_rubrics.find({"company_id": company_id})
+    return [EvaluationRubric(**doc) async for doc in cursor]
+
+@api_router.get("/rubrics/{rubric_id}", response_model=EvaluationRubric)
+async def get_rubric(
+    rubric_id: str,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin, UserRole.manager, UserRole.viewer))
+):
+    company_id = get_company_id(current_user)
+    doc = await db.evaluation_rubrics.find_one({"id": rubric_id, "company_id": company_id})
+    if not doc:
+        raise HTTPException(status_code=404, detail="Rubric not found")
+    return EvaluationRubric(**doc)
+
+@api_router.put("/rubrics/{rubric_id}", response_model=EvaluationRubric)
+async def update_rubric(
+    rubric_id: str,
+    rubric_update: EvaluationRubricCreate,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+    result = await db.evaluation_rubrics.update_one(
+        {"id": rubric_id, "company_id": company_id},
+        {"$set": {
+            "name": rubric_update.name,
+            "evidence_mapping": rubric_update.evidence_mapping,
+            "roleplay_mapping": rubric_update.roleplay_mapping,
+            "updated_at": datetime.now(timezone.utc).isoformat()
+        }}
+    )
+    if result.matched_count == 0:
+        raise HTTPException(status_code=404, detail="Rubric not found")
+        
+    doc = await db.evaluation_rubrics.find_one({"id": rubric_id, "company_id": company_id})
+    return EvaluationRubric(**doc)
+
+@api_router.delete("/rubrics/{rubric_id}")
+async def delete_rubric(
+    rubric_id: str,
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    company_id = get_company_id(current_user)
+    result = await db.evaluation_rubrics.delete_one({"id": rubric_id, "company_id": company_id})
+    if result.deleted_count == 0:
+        raise HTTPException(status_code=404, detail="Rubric not found")
+    return {"message": "Rubric deleted successfully"}
+
+@api_router.post("/rubrics/seed")
+async def seed_rubrics(
+    current_user: dict = Depends(RequireRole(UserRole.hr_admin))
+):
+    """Seed the database with an example baseline Evaluation Rubric."""
+    company_id = get_company_id(current_user)
+    
+    # Needs to match against competencies, let's fetch a soft-skill for roleplay and hard-skill for evidence if possible
+    comps_cursor = db.competencies.find({"company_id": company_id})
+    competencies = [Competency(**doc) async for doc in comps_cursor]
+    
+    if not competencies:
+        raise HTTPException(status_code=400, detail="Seed competencies first.")
+        
+    existing_count = await db.evaluation_rubrics.count_documents({"company_id": company_id})
+    if existing_count > 0:
+        return {"message": "Company already has rubrics. Skipping seed.", "seeded": 0}
+        
+    # We will pick 1 competency for Roleplay and 1 for Evidence as an example
+    # Since we use the PLN template, Analytical Thinking is likely present.
+    sample_comp_1 = competencies[0].id
+    sample_comp_2 = competencies[1].id if len(competencies) > 1 else sample_comp_1
+    
+    now = datetime.now(timezone.utc).isoformat()
+    rubric_id = str(uuid.uuid4())
+    
+    # Demonstrate dynamic configuration arrays without hardcoded variables
+    evidence_map = [
+        {
+            "category": "leadership_experience", 
+            "maps_to_competency_id": sample_comp_1,
+            "weight_in_evidence": 50
+        },
+        {
+            "category": "technical_certifications",
+            "maps_to_competency_id": sample_comp_2,
+            "weight_in_evidence": 50
+        }
+    ]
+    
+    roleplay_map = [
+        {
+            "dimension": "problem_solving",
+            "maps_to_competency_id": sample_comp_1,
+            "weight_in_roleplay": 100
+        }
+    ]
+    
+    rubric_obj = EvaluationRubric(
+        id=rubric_id,
+        company_id=company_id,
+        name="Baseline Standard Rubric",
+        evidence_mapping=evidence_map,
+        roleplay_mapping=roleplay_map,
+        created_at=now,
+        updated_at=now
+    )
+    
+    await db.evaluation_rubrics.insert_one(rubric_obj.model_dump())
+    
+    return {
+        "message": f"Seed successful for company {company_id}",
+        "seeded": 1,
+        "sample": rubric_obj.model_dump()
+    }
 
 # Include router and middleware
 app.include_router(api_router)
@@ -4712,10 +5417,52 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+async def ensure_test_user():
+    """Ensure a persistent testing account exists based on env variables."""
+    test_email = os.environ.get("TEST_USER_EMAIL")
+    test_password = os.environ.get("TEST_USER_PASSWORD")
+    if test_email and test_password:
+        existing = await db.users.find_one({"email": test_email})
+        hashed_pw = hash_password(test_password)
+        if existing:
+            await db.users.update_one(
+                {"email": test_email},
+                {"$set": {
+                    "password": hashed_pw,
+                    "is_approved": True,
+                    "is_active": True,
+                    "credits": 9999.0
+                }}
+            )
+            print(f"Test user {test_email} updated with new credentials.")
+        else:
+            user_id = str(uuid.uuid4())
+            user = {
+                "id": user_id,
+                "email": test_email,
+                "password": hashed_pw,
+                "name": "Test Agent",
+                "company_id": None,
+                "created_at": datetime.now(timezone.utc).isoformat(),
+                "is_approved": True,
+                "is_active": True,
+                "credits": 9999.0,
+                "expiry_date": None
+            }
+            await db.users.insert_one(user)
+            await db.settings.insert_one({
+                "user_id": user_id,
+                "openrouter_api_key": "",
+                "model_name": "openai/gpt-4o-mini",
+                "language": "en"
+            })
+            print(f"Test user {test_email} created.")
+
 @app.on_event("startup")
 async def startup_db():
     """Initialize database indexes on startup."""
     await create_indexes()
+    await ensure_test_user()
 
 @app.on_event("shutdown")
 async def shutdown_db_client():

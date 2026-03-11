@@ -1,0 +1,22 @@
+# AI Context Ground Rules for Aikrut HR Assessment OS
+
+You are assisting with the Aikrut HR Assessment OS platform. 
+We have recently PIVOTED from an external CV screener (As-Is) to an internal BUMN-focused HR Assessment Operating System (To-Be).
+
+**ALWAYS FOLLOW THESE RULES WHEN WRITING CODE OR PLANNING ARCHITECTURE:**
+
+1. **Read the Vision First:** Always refer to `PRODUCT_VISION.md` and `docs/gap_analysis.md` before making any significant structural database or logic changes.
+
+2. **Mandatory Multi-Tenancy:** The platform is multi-tenant. EVERY new database collection you create must have `company_id` as a mandatory field from day one. Do not defer this.
+
+3. **State Machine over Status Fields:** "Assessment Sessions" and "Human Review Workflows" must be built as explicit State Machines (`pending` -> `in_progress` -> `completed` -> `pending_review` -> `approved`/`overridden`). Do not use simple boolean or text fields for approval statuses. If a human overrides an AI decision, an `override_reason` MUST be recorded for audit trails.
+
+4. **Data Isolation (Layer Normalization):** Never merge raw AI scores (e.g., CV percentage vs Roleplay 1-5 scale) directly. All scores must pass through a strict Normalization Layer to map them to the unified BUMN Competency Framework.
+
+5. **Clean Slate Database:** We are NOT migrating old `analyses` data. When building the new `CompetencyProfile` architecture, create entirely new collections. Leave old collections related to the old CV screener workflow alone (deprecated).
+
+6. **Hardcode Discipline:** Temporary mapping logic (e.g., mapping old category names to new `competency_id`s in Phase 1) MUST NOT be embedded in primary business logic functions like `server.py` endpoints. Put them in dedicated config/constants files so they are easily replaceable later.
+
+7. **AI Recommends, Human Decides:** Ensure your code always positions the AI as a recommender, not the final decision-maker.
+
+_Acknowledge these rules in your responses when assisting with architecture or backend logic for the new vision._

@@ -53,7 +53,7 @@ export const PendingApproval = () => {
           </div>
 
           <div className="pt-4 space-y-3">
-            <p className="text-sm text-center text-slate-500">
+            <p className="text-sm text-center text-slate-600">
               Need immediate access? Contact our admin team at:
               <br />
               <a href="mailto:admin@widyaanalytic.org" className="text-indigo-600 hover:underline font-medium">

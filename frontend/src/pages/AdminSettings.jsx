@@ -202,7 +202,7 @@ export const AdminSettings = () => {
                           size="sm"
                           onClick={() => handleReset(prompt.key)}
                           disabled={resetting === prompt.key}
-                          className="text-slate-500 hover:text-slate-700"
+                          className="text-slate-600 hover:text-slate-700"
                         >
                           {resetting === prompt.key ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
@@ -216,7 +216,7 @@ export const AdminSettings = () => {
                     <CardContent className="space-y-3">
                       {/* Available Variables */}
                       <div className="flex flex-wrap gap-2">
-                        <span className="text-xs text-slate-500">Variables:</span>
+                        <span className="text-xs text-slate-600">Variables:</span>
                         {prompt.variables.map(v => (
                           <code key={v} className="text-xs bg-slate-100 px-2 py-0.5 rounded text-indigo-600">
                             {v}

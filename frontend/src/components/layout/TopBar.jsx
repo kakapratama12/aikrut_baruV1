@@ -19,7 +19,7 @@ export const TopBar = ({ title, subtitle }) => {
     <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-8 sticky top-0 z-30" data-testid="topbar">
       <div>
         <h1 className="font-heading font-semibold text-xl text-slate-900">{title}</h1>
-        {subtitle && <p className="text-sm text-slate-500">{subtitle}</p>}
+        {subtitle && <p className="text-sm text-slate-600">{subtitle}</p>}
       </div>
 
       <div className="flex items-center gap-4">
@@ -47,7 +47,7 @@ export const TopBar = ({ title, subtitle }) => {
           </Avatar>
           <div className="hidden sm:block">
             <p className="text-sm font-medium text-slate-900">{user?.name}</p>
-            <p className="text-xs text-slate-500">{user?.email}</p>
+            <p className="text-xs text-slate-600">{user?.email}</p>
           </div>
         </div>
       </div>

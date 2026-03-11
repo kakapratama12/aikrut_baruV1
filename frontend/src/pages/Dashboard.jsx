@@ -123,7 +123,7 @@ export const Dashboard = () => {
                     <CardContent className="p-6">
                       <div className="flex items-start justify-between">
                         <div>
-                          <p className="text-sm text-slate-500 mb-1">{stat.label}</p>
+                          <p className="text-sm text-slate-600 mb-1">{stat.label}</p>
                           {stat.isScore ? (
                             <div className="flex items-center gap-3">
                               <ScoreRing score={stat.value} size={48} strokeWidth={5} />
@@ -154,13 +154,13 @@ export const Dashboard = () => {
               <Card className="border-slate-100 shadow-soft">
                 <CardHeader className="pb-4">
                   <CardTitle className="font-heading text-lg flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-slate-400" />
+                    <Clock className="w-5 h-5 text-slate-500" />
                     Recent Activity
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {activity.length === 0 ? (
-                    <p className="text-sm text-slate-500 text-center py-8">No recent activity</p>
+                    <p className="text-sm text-slate-600 text-center py-8">No recent activity</p>
                   ) : (
                     <div className="space-y-4">
                       {activity.map((item, index) => (
@@ -170,7 +170,7 @@ export const Dashboard = () => {
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm text-slate-700">{item.message}</p>
-                            <p className="text-xs text-slate-400">
+                            <p className="text-xs text-slate-500">
                               {new Date(item.timestamp).toLocaleDateString()}
                             </p>
                           </div>
@@ -185,7 +185,7 @@ export const Dashboard = () => {
               <Card className="border-slate-100 shadow-soft">
                 <CardHeader className="pb-4 flex flex-row items-center justify-between">
                   <CardTitle className="font-heading text-lg flex items-center gap-2">
-                    <Briefcase className="w-5 h-5 text-slate-400" />
+                    <Briefcase className="w-5 h-5 text-slate-500" />
                     Open Positions
                   </CardTitle>
                   <Button
@@ -201,7 +201,7 @@ export const Dashboard = () => {
                 </CardHeader>
                 <CardContent>
                   {recentJobs.length === 0 ? (
-                    <p className="text-sm text-slate-500 text-center py-8">No open positions</p>
+                    <p className="text-sm text-slate-600 text-center py-8">No open positions</p>
                   ) : (
                     <div className="space-y-3">
                       {recentJobs.map((job) => (
@@ -213,7 +213,7 @@ export const Dashboard = () => {
                           <div className="flex items-center justify-between">
                             <div>
                               <p className="font-medium text-slate-900">{job.title}</p>
-                              <p className="text-sm text-slate-500">{job.location || 'Remote'}</p>
+                              <p className="text-sm text-slate-600">{job.location || 'Remote'}</p>
                             </div>
                             <span className={`badge-${job.status === 'open' ? 'success' : 'neutral'}`}>
                               {job.status}

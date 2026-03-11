@@ -9,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/ui/tabs'
 import { Slider } from '../components/ui/slider';
 import { companyAPI } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
-import { Building2, Sparkles, Plus, Trash2, Save, Loader2 } from 'lucide-react';
+import { Building2, Sparkles, Plus, Trash2, Save, Loader2, HeartHandshake } from 'lucide-react';
 import { toast } from 'sonner';
 
 export const Company = () => {
@@ -137,9 +137,21 @@ export const Company = () => {
 
       <div className="p-8 max-w-4xl">
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="bg-slate-100 p-1 rounded-full">
-            <TabsTrigger value="general" className="rounded-full px-6">General Info</TabsTrigger>
-            <TabsTrigger value="values" className="rounded-full px-6">Company Culture</TabsTrigger>
+          <TabsList className="bg-slate-100 p-1 rounded-full border border-slate-200">
+            <TabsTrigger
+              value="general"
+              className="rounded-full px-6 py-2 transition-all data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium"
+            >
+              <Building2 className="w-4 h-4 mr-2" />
+              General Info
+            </TabsTrigger>
+            <TabsTrigger
+              value="values"
+              className="rounded-full px-6 py-2 transition-all data-[state=active]:bg-indigo-600 data-[state=active]:text-white data-[state=active]:shadow-md font-medium"
+            >
+              <HeartHandshake className="w-4 h-4 mr-2" />
+              Company Culture
+            </TabsTrigger>
           </TabsList>
 
           {/* General Info Tab */}
@@ -203,144 +215,150 @@ export const Company = () => {
           </TabsContent>
 
           {/* Company Values Tab */}
-          <TabsContent value="values" className="space-y-6 animate-fade-in">
-            {/* AI Generator Card */}
-            <Card className="border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50">
-              <CardHeader>
-                <CardTitle className="font-heading flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-indigo-500" />
-                  AI Value Generator
-                </CardTitle>
-                <CardDescription>Describe your company culture and let AI generate structured values</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <Textarea
-                  value={narrative}
-                  onChange={(e) => setNarrative(e.target.value)}
-                  placeholder="Example: We value innovation and creative problem-solving. Our team believes in transparency and open communication. We prioritize work-life balance and employee wellbeing. Customer satisfaction is at the heart of everything we do..."
-                  rows={4}
-                  data-testid="values-narrative"
-                />
-                <Button
-                  onClick={handleGenerateValues}
-                  disabled={generating || !narrative.trim()}
-                  className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-full"
-                  data-testid="generate-values-btn"
-                >
-                  {generating ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4 mr-2" />
-                      Generate Values
-                    </>
-                  )}
-                </Button>
-              </CardContent>
-            </Card>
+          <TabsContent value="values" className="animate-fade-in">
+            <div className="flex flex-col lg:flex-row gap-8">
+              {/* Left Column: AI Value Generator */}
+              <div className="w-full lg:w-1/3 space-y-6">
+                <Card className="border-indigo-100 bg-gradient-to-r from-indigo-50 to-purple-50 sticky top-24">
+                  <CardHeader>
+                    <CardTitle className="font-heading flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-indigo-500" />
+                      AI Value Generator
+                    </CardTitle>
+                    <CardDescription>Describe your company culture and let AI generate structured values</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <Textarea
+                      value={narrative}
+                      onChange={(e) => setNarrative(e.target.value)}
+                      placeholder="Example: We value innovation and creative problem-solving. Our team believes in transparency and open communication. We prioritize work-life balance and employee wellbeing. Customer satisfaction is at the heart of everything we do..."
+                      rows={4}
+                      data-testid="values-narrative"
+                    />
+                    <Button
+                      onClick={handleGenerateValues}
+                      disabled={generating || !narrative.trim()}
+                      className="bg-indigo-500 hover:bg-indigo-600 text-white rounded-full w-full"
+                      data-testid="generate-values-btn"
+                    >
+                      {generating ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Generating...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Generate Values
+                        </>
+                      )}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
 
-            {/* Manual Values Card */}
-            <Card className="border-slate-100 shadow-soft">
-              <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                  <CardTitle className="font-heading">Company Culture</CardTitle>
-                  <CardDescription>
-                    Define values used for candidate evaluation. Weights must total 100%.
-                  </CardDescription>
-                </div>
-                <Button
-                  onClick={addValue}
-                  variant="outline"
-                  size="sm"
-                  className="rounded-full"
-                  data-testid="add-value-btn"
-                >
-                  <Plus className="w-4 h-4 mr-1" />
-                  Add Value
-                </Button>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {form.values.length === 0 ? (
-                  <p className="text-sm text-slate-500 text-center py-8">
-                    No values defined. Add manually or use AI generator.
-                  </p>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                      {form.values.map((value, index) => (
-                        <div key={value.id} className="p-4 rounded-xl bg-slate-50 flex flex-col h-full">
-                          <div className="flex items-start gap-4 flex-1">
-                            <div className="flex-1 space-y-3 flex flex-col h-full">
-                              <Input
-                                value={value.name}
-                                onChange={(e) => updateValue(value.id, 'name', e.target.value)}
-                                placeholder="Value name"
-                                className="font-medium"
-                                data-testid={`value-name-${index}`}
-                              />
-                              <Textarea
-                                value={value.description}
-                                onChange={(e) => updateValue(value.id, 'description', e.target.value)}
-                                placeholder="Description"
-                                rows={2}
-                                data-testid={`value-desc-${index}`}
-                              />
-                              <div className="flex items-center gap-4 mt-auto pt-2">
-                                <Label className="text-sm text-slate-500 w-16">Weight:</Label>
-                                <Slider
-                                  value={[value.weight || 0]}
-                                  onValueChange={([v]) => updateValue(value.id, 'weight', v)}
-                                  max={100}
-                                  step={1}
-                                  className="flex-1"
-                                />
-                                <div className="flex items-center gap-1 w-20">
+              {/* Right Column: Manual Values */}
+              <div className="w-full lg:w-2/3 space-y-6">
+                <Card className="border-slate-100 shadow-soft">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                      <CardTitle className="font-heading">Company Culture</CardTitle>
+                      <CardDescription>
+                        Define values used for candidate evaluation. Weights must total 100%.
+                      </CardDescription>
+                    </div>
+                    <Button
+                      onClick={addValue}
+                      variant="outline"
+                      size="sm"
+                      className="rounded-full"
+                      data-testid="add-value-btn"
+                    >
+                      <Plus className="w-4 h-4 mr-1" />
+                      Add Value
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {form.values.length === 0 ? (
+                      <p className="text-sm text-slate-600 text-center py-8">
+                        No values defined. Add manually or use AI generator.
+                      </p>
+                    ) : (
+                      <>
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                          {form.values.map((value, index) => (
+                            <div key={value.id} className="p-4 rounded-xl bg-slate-50 flex flex-col h-full">
+                              <div className="flex items-start gap-4 flex-1">
+                                <div className="flex-1 space-y-3 flex flex-col h-full">
                                   <Input
-                                    type="number"
-                                    min="0"
-                                    max="100"
-                                    value={value.weight === 0 ? '' : value.weight}
-                                    onChange={(e) => {
-                                      let v = parseInt(e.target.value, 10);
-                                      if (isNaN(v)) v = 0;
-                                      if (v > 100) v = 100;
-                                      if (v < 0) v = 0;
-                                      updateValue(value.id, 'weight', v);
-                                    }}
-                                    className="h-8 px-2 text-right font-medium"
+                                    value={value.name}
+                                    onChange={(e) => updateValue(value.id, 'name', e.target.value)}
+                                    placeholder="Value name"
+                                    className="font-medium"
+                                    data-testid={`value-name-${index}`}
                                   />
-                                  <span className="text-sm font-medium text-slate-500">%</span>
+                                  <Textarea
+                                    value={value.description}
+                                    onChange={(e) => updateValue(value.id, 'description', e.target.value)}
+                                    placeholder="Description"
+                                    rows={2}
+                                    data-testid={`value-desc-${index}`}
+                                  />
+                                  <div className="flex items-center gap-4 mt-auto pt-2">
+                                    <Label className="text-sm text-slate-600 w-16">Weight:</Label>
+                                    <Slider
+                                      value={[value.weight || 0]}
+                                      onValueChange={([v]) => updateValue(value.id, 'weight', v)}
+                                      max={100}
+                                      step={1}
+                                      className="flex-1"
+                                    />
+                                    <div className="flex items-center gap-1 w-20">
+                                      <Input
+                                        type="number"
+                                        min="0"
+                                        max="100"
+                                        value={value.weight === 0 ? '' : value.weight}
+                                        onChange={(e) => {
+                                          let v = parseInt(e.target.value, 10);
+                                          if (isNaN(v)) v = 0;
+                                          if (v > 100) v = 100;
+                                          if (v < 0) v = 0;
+                                          updateValue(value.id, 'weight', v);
+                                        }}
+                                        className="h-8 px-2 text-right font-medium"
+                                      />
+                                      <span className="text-sm font-medium text-slate-600">%</span>
+                                    </div>
+                                  </div>
                                 </div>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => removeValue(value.id)}
+                                  className="text-slate-500 hover:text-red-500"
+                                  data-testid={`remove-value-${index}`}
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
                               </div>
                             </div>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeValue(value.id)}
-                              className="text-slate-400 hover:text-red-500"
-                              data-testid={`remove-value-${index}`}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
+                          ))}
+                        </div>                {/* Weight Validation */}
+                        <div className={`flex items-center justify-between p-3 rounded-lg ${isWeightValid ? 'bg-green-50' : 'bg-red-50'}`}>
+                          <span className={`text-sm ${isWeightValid ? 'text-green-700' : 'text-red-700'}`}>
+                            Total Weight: {totalWeight.toFixed(0)}%
+                          </span>
+                          <span className={`text-xs ${isWeightValid ? 'text-green-600' : 'text-red-600'}`}>
+                            {isWeightValid ? '✓ Valid' : 'Must equal 100%'}
+                          </span>
                         </div>
-                      ))}
-                    </div>                {/* Weight Validation */}
-                    <div className={`flex items-center justify-between p-3 rounded-lg ${isWeightValid ? 'bg-green-50' : 'bg-red-50'}`}>
-                      <span className={`text-sm ${isWeightValid ? 'text-green-700' : 'text-red-700'}`}>
-                        Total Weight: {totalWeight.toFixed(0)}%
-                      </span>
-                      <span className={`text-xs ${isWeightValid ? 'text-green-600' : 'text-red-600'}`}>
-                        {isWeightValid ? '✓ Valid' : 'Must equal 100%'}
-                      </span>
-                    </div>
-                  </>
-                )}
-              </CardContent>
-            </Card>
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
 

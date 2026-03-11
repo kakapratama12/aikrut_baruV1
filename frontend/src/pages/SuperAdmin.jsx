@@ -165,7 +165,7 @@ export const SuperAdmin = () => {
             </div>
             <div>
               <h1 className="font-heading font-bold text-xl text-slate-900">Super Admin</h1>
-              <p className="text-sm text-slate-500">Aikrut Control Panel</p>
+              <p className="text-sm text-slate-600">Aikrut Control Panel</p>
             </div>
           </div>
           
@@ -201,7 +201,7 @@ export const SuperAdmin = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Total Users</p>
+                  <p className="text-sm text-slate-600">Total Users</p>
                   <p className="text-3xl font-bold text-slate-900 mt-1">{stats?.total_users || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
@@ -215,7 +215,7 @@ export const SuperAdmin = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Pending Approval</p>
+                  <p className="text-sm text-slate-600">Pending Approval</p>
                   <p className="text-3xl font-bold text-orange-600 mt-1">{stats?.pending_users || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
@@ -229,7 +229,7 @@ export const SuperAdmin = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Active Users</p>
+                  <p className="text-sm text-slate-600">Active Users</p>
                   <p className="text-3xl font-bold text-green-600 mt-1">{stats?.active_users || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center">
@@ -243,7 +243,7 @@ export const SuperAdmin = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Total Credits</p>
+                  <p className="text-sm text-slate-600">Total Credits</p>
                   <p className="text-3xl font-bold text-purple-600 mt-1">{stats?.total_credits_distributed?.toFixed(0) || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center">
@@ -257,7 +257,7 @@ export const SuperAdmin = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Total Jobs</p>
+                  <p className="text-sm text-slate-600">Total Jobs</p>
                   <p className="text-3xl font-bold text-slate-900 mt-1">{stats?.total_jobs || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
@@ -271,7 +271,7 @@ export const SuperAdmin = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Total Candidates</p>
+                  <p className="text-sm text-slate-600">Total Candidates</p>
                   <p className="text-3xl font-bold text-slate-900 mt-1">{stats?.total_candidates || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-teal-100 flex items-center justify-center">
@@ -285,7 +285,7 @@ export const SuperAdmin = () => {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-slate-500">Total Analyses</p>
+                  <p className="text-sm text-slate-600">Total Analyses</p>
                   <p className="text-3xl font-bold text-slate-900 mt-1">{stats?.total_analyses || 0}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-pink-100 flex items-center justify-center">
@@ -326,7 +326,7 @@ export const SuperAdmin = () => {
                       <td className="py-3 px-4">
                         <div>
                           <p className="font-medium text-slate-900">{user.name}</p>
-                          <p className="text-sm text-slate-500">{user.email}</p>
+                          <p className="text-sm text-slate-600">{user.email}</p>
                         </div>
                       </td>
                       <td className="py-3 px-4">
@@ -396,7 +396,7 @@ export const SuperAdmin = () => {
                             <span className="font-medium text-slate-900">{user.credits?.toFixed(2) || '0.00'}</span>
                             <button
                               onClick={() => setAddingCredits(prev => ({ ...prev, [user.id]: '' }))}
-                              className="text-slate-400 hover:text-purple-600"
+                              className="text-slate-500 hover:text-purple-600"
                               title="Add/Subtract credits"
                             >
                               <Edit2 className="w-3 h-3" />
@@ -411,7 +411,7 @@ export const SuperAdmin = () => {
                         </div>
                       </td>
                       <td className="py-3 px-4">
-                        <span className="text-sm text-slate-500">
+                        <span className="text-sm text-slate-600">
                           {new Date(user.created_at).toLocaleDateString()}
                         </span>
                       </td>

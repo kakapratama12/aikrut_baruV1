@@ -43,7 +43,7 @@ export const Login = () => {
           </div>
           <div>
             <h1 className="font-heading font-bold text-2xl text-slate-900">Aikrut</h1>
-            <p className="text-sm text-slate-500">Smart HR Assistant</p>
+            <p className="text-sm text-slate-600">Smart HR Assistant</p>
           </div>
         </div>
 
@@ -65,7 +65,7 @@ export const Login = () => {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     id="email"
                     type="email"
@@ -82,7 +82,7 @@ export const Login = () => {
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
                   <Input
                     id="password"
                     type="password"
@@ -106,7 +106,7 @@ export const Login = () => {
               </Button>
             </form>
 
-            <p className="mt-6 text-center text-sm text-slate-500">
+            <p className="mt-6 text-center text-sm text-slate-600">
               Don't have an account?{' '}
               <Link to="/register" className="text-indigo-600 hover:text-indigo-700 font-medium">
                 Create one

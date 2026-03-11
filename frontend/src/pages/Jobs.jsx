@@ -59,7 +59,7 @@ export const Jobs = () => {
       <div className="p-8">
         <div className="flex justify-between items-center mb-6">
           <div>
-            <p className="text-slate-500">{jobs.length} position{jobs.length !== 1 ? 's' : ''}</p>
+            <p className="text-slate-600">{jobs.length} position{jobs.length !== 1 ? 's' : ''}</p>
           </div>
           <Button
             onClick={() => navigate('/jobs/new')}
@@ -107,12 +107,12 @@ export const Jobs = () => {
 
                   <div className="space-y-2 mb-4">
                     {job.location && (
-                      <div className="flex items-center gap-2 text-sm text-slate-500">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
                         <MapPin className="w-4 h-4" />
                         {job.location}
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-sm text-slate-500">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
                       <Clock className="w-4 h-4" />
                       {job.employment_type}
                     </div>
@@ -127,13 +127,13 @@ export const Jobs = () => {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
+                        className="h-8 w-8 text-slate-500 hover:text-red-500 hover:bg-red-50"
                         onClick={(e) => handleDeleteJob(e, job.id, job.title)}
                         data-testid={`delete-job-${job.id}`}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
-                      <ChevronRight className="w-4 h-4 text-slate-400" />
+                      <ChevronRight className="w-4 h-4 text-slate-500" />
                     </div>
                   </div>
                 </CardContent>

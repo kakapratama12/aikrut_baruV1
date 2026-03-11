@@ -146,12 +146,12 @@ export const SuperAdminSettings = () => {
               <button
                 type="button"
                 onClick={() => setShowApiKey(!showApiKey)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-600"
               >
                 {showApiKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Get your API key from{' '}
               <a 
                 href="https://openrouter.ai/keys" 
@@ -186,7 +186,7 @@ export const SuperAdminSettings = () => {
               onChange={(e) => setSettings(prev => ({ ...prev, model_name: e.target.value }))}
               placeholder="e.g., openai/gpt-4o or anthropic/claude-3.5-sonnet"
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               Browse available models at{' '}
               <a 
                 href="https://openrouter.ai/models" 
@@ -200,7 +200,7 @@ export const SuperAdminSettings = () => {
           </div>
           
           <div className="space-y-2">
-            <Label className="text-slate-500 text-sm">Quick Select</Label>
+            <Label className="text-slate-600 text-sm">Quick Select</Label>
             <div className="flex flex-wrap gap-2">
               {AI_MODELS.map(model => (
                 <button
@@ -242,7 +242,7 @@ export const SuperAdminSettings = () => {
               value={settings.default_credits_new_user}
               onChange={(e) => setSettings(prev => ({ ...prev, default_credits_new_user: e.target.value }))}
             />
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-slate-600">
               This amount will be automatically assigned when you approve a new user
             </p>
           </div>
@@ -278,7 +278,7 @@ export const SuperAdminSettings = () => {
               </div>
             ))}
           </div>
-          <p className="text-xs text-slate-500 mt-4">
+          <p className="text-xs text-slate-600 mt-4">
             Example: A multiplier of 1.5 means users pay 1.5x the actual OpenRouter cost
           </p>
         </CardContent>

@@ -581,12 +581,12 @@ export const Candidates = () => {
         <div className="flex items-center justify-between mb-8">
           <div>
             <h1 className="text-3xl font-heading font-bold text-slate-900">Talent Pool</h1>
-            <p className="text-slate-500 mt-1">Manage your candidate database</p>
+            <p className="text-slate-600 mt-1">Manage your candidate database</p>
           </div>
           
           <div className="flex items-center gap-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-500 w-4 h-4" />
               <Input
                 placeholder="Search candidates..."
                 value={searchTerm}
@@ -617,7 +617,7 @@ export const Candidates = () => {
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-slate-900">{total}</p>
-                  <p className="text-sm text-slate-500">Total Candidates</p>
+                  <p className="text-sm text-slate-600">Total Candidates</p>
                 </div>
               </div>
             </CardContent>
@@ -667,7 +667,7 @@ export const Candidates = () => {
                                 </div>
                                 <div>
                                   <h3 className="font-medium text-slate-900">{candidate.name}</h3>
-                                  <p className="text-sm text-slate-500">{candidate.email || 'No email'}</p>
+                                  <p className="text-sm text-slate-600">{candidate.email || 'No email'}</p>
                                 </div>
                               </div>
                               <div className="flex items-center gap-1">
@@ -677,7 +677,7 @@ export const Candidates = () => {
                                   </span>
                                 ))}
                                 {candidate.evidence?.length > 3 && (
-                                  <span className="text-xs text-slate-400">+{candidate.evidence.length - 3}</span>
+                                  <span className="text-xs text-slate-500">+{candidate.evidence.length - 3}</span>
                                 )}
                               </div>
                             </div>
@@ -688,7 +688,7 @@ export const Candidates = () => {
                     
                     {/* Pagination */}
                     <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-100">
-                      <span className="text-sm text-slate-500">
+                      <span className="text-sm text-slate-600">
                         Page {page} of {totalPages}
                       </span>
                       <div className="flex gap-2">
@@ -848,7 +848,7 @@ export const Candidates = () => {
                           
                           if (!hasAnyTags) {
                             return (
-                              <div className="text-center py-8 text-slate-400">
+                              <div className="text-center py-8 text-slate-500">
                                 <Tag className="w-12 h-12 mx-auto mb-2 opacity-50" />
                                 <p>No tags yet</p>
                                 <p className="text-sm">Click Re-Extract Tags to analyze evidence</p>
@@ -887,7 +887,7 @@ export const Candidates = () => {
                                         {deletingTag === tag.tag_value ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                                       </button>
                                     </div>
-                                  )) : <span className="text-xs text-slate-400 italic">No domain tags</span>}
+                                  )) : <span className="text-xs text-slate-500 italic">No domain tags</span>}
                                 </div>
                               </div>
                               
@@ -918,7 +918,7 @@ export const Candidates = () => {
                                         {deletingTag === tag.tag_value ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                                       </button>
                                     </div>
-                                  )) : <span className="text-xs text-slate-400 italic">No job family tags</span>}
+                                  )) : <span className="text-xs text-slate-500 italic">No job family tags</span>}
                                 </div>
                               </div>
                               
@@ -949,7 +949,7 @@ export const Candidates = () => {
                                         {deletingTag === tag.tag_value ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                                       </button>
                                     </div>
-                                  )) : <span className="text-xs text-slate-400 italic">No skill tags</span>}
+                                  )) : <span className="text-xs text-slate-500 italic">No skill tags</span>}
                                 </div>
                               </div>
                               
@@ -980,12 +980,12 @@ export const Candidates = () => {
                                         {deletingTag === tag.tag_value ? <Loader2 className="w-3 h-3 animate-spin" /> : <X className="w-3 h-3" />}
                                       </button>
                                     </div>
-                                  )) : <span className="text-xs text-slate-400 italic">No scope tags</span>}
+                                  )) : <span className="text-xs text-slate-500 italic">No scope tags</span>}
                                 </div>
                               </div>
                               
                               {/* Legend */}
-                              <div className="text-xs text-slate-400 flex items-center gap-4 pt-2 border-t border-slate-100">
+                              <div className="text-xs text-slate-500 flex items-center gap-4 pt-2 border-t border-slate-100">
                                 <span className="flex items-center gap-1">
                                   <Sparkles className="w-3 h-3" /> = Auto-extracted
                                 </span>
@@ -1035,7 +1035,7 @@ export const Candidates = () => {
                                         </div>
                                       </div>
                                       <div className="flex items-center gap-2">
-                                        <span className="text-xs text-slate-400">
+                                        <span className="text-xs text-slate-500">
                                           {ev.uploaded_at ? new Date(ev.uploaded_at).toLocaleDateString() : ''}
                                         </span>
                                         <Button
@@ -1054,13 +1054,13 @@ export const Candidates = () => {
                                       </div>
                                     </div>
                                     {ev.pages && ev.pages.length > 0 && (
-                                      <p className="text-xs text-slate-400 mb-2">
+                                      <p className="text-xs text-slate-500 mb-2">
                                         Pages: {ev.pages.join(', ')}
                                       </p>
                                     )}
                                     {/* Content length indicator */}
                                     <div className="flex items-center justify-between mb-2">
-                                      <span className="text-xs text-slate-400">
+                                      <span className="text-xs text-slate-500">
                                         Content: {ev.content?.length?.toLocaleString() || 0} characters
                                       </span>
                                       {ev.content?.length > 500 && (
@@ -1093,7 +1093,7 @@ export const Candidates = () => {
                             </div>
                           </ScrollArea>
                         ) : (
-                          <div className="text-center py-8 text-slate-400">
+                          <div className="text-center py-8 text-slate-500">
                             <FileText className="w-12 h-12 mx-auto mb-2 opacity-50" />
                             <p>No evidence uploaded yet</p>
                           </div>
@@ -1104,7 +1104,7 @@ export const Candidates = () => {
                     <TabsContent value="info">
                       <div className="space-y-4">
                         <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
-                          <Mail className="w-5 h-5 text-slate-400" />
+                          <Mail className="w-5 h-5 text-slate-500" />
                           {editMode ? (
                             <Input
                               value={editForm.email}
@@ -1116,7 +1116,7 @@ export const Candidates = () => {
                           )}
                         </div>
                         <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
-                          <Phone className="w-5 h-5 text-slate-400" />
+                          <Phone className="w-5 h-5 text-slate-500" />
                           {editMode ? (
                             <Input
                               value={editForm.phone}
@@ -1137,7 +1137,7 @@ export const Candidates = () => {
                 <div className="text-center py-16">
                   <User className="w-16 h-16 mx-auto mb-4 text-slate-300" />
                   <h3 className="text-lg font-medium text-slate-700">Select a candidate</h3>
-                  <p className="text-slate-400">Click on a candidate to view details</p>
+                  <p className="text-slate-500">Click on a candidate to view details</p>
                 </div>
               </Card>
             )}
@@ -1198,12 +1198,12 @@ export const Candidates = () => {
                   {uploading ? (
                     <Loader2 className="w-8 h-8 mx-auto mb-2 text-indigo-500 animate-spin" />
                   ) : (
-                    <Upload className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                    <Upload className="w-8 h-8 mx-auto mb-2 text-slate-500" />
                   )}
                   <p className="font-medium text-slate-700">
                     {uploading ? 'Processing...' : 'Click to upload PDF files'}
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">
+                  <p className="text-sm text-slate-600 mt-1">
                     {selectedCandidate ? 'Add documents to this candidate' : 'Each PDF creates one candidate (with auto evidence splitting)'}
                   </p>
                 </div>
@@ -1222,12 +1222,12 @@ export const Candidates = () => {
                   {zipUploading ? (
                     <Loader2 className="w-8 h-8 mx-auto mb-2 text-indigo-500 animate-spin" />
                   ) : (
-                    <FolderArchive className="w-8 h-8 mx-auto mb-2 text-slate-400" />
+                    <FolderArchive className="w-8 h-8 mx-auto mb-2 text-slate-500" />
                   )}
                   <p className="font-medium text-slate-700">
                     {zipUploading ? 'Processing ZIP...' : 'Click to upload ZIP file'}
                   </p>
-                  <p className="text-sm text-slate-500 mt-1">One ZIP = One candidate with multiple evidence</p>
+                  <p className="text-sm text-slate-600 mt-1">One ZIP = One candidate with multiple evidence</p>
                 </div>
               )}
             </div>
@@ -1255,7 +1255,7 @@ export const Candidates = () => {
             
             {/* Batch Actions */}
             <div className="flex gap-2 py-2 border-b border-slate-200">
-              <span className="text-sm text-slate-500 mr-2">Batch Actions:</span>
+              <span className="text-sm text-slate-600 mr-2">Batch Actions:</span>
               <Button
                 variant="outline"
                 size="sm"
@@ -1290,7 +1290,7 @@ export const Candidates = () => {
               <div className="grid grid-cols-12 gap-4 h-full">
                 {/* Left: List of duplicates */}
                 <div className="col-span-3 border-r border-slate-200 pr-4 overflow-y-auto">
-                  <p className="text-xs font-medium text-slate-500 mb-2">Files with duplicates:</p>
+                  <p className="text-xs font-medium text-slate-600 mb-2">Files with duplicates:</p>
                   <div className="space-y-2">
                     {bulkDuplicates.map((dup, idx) => (
                       <div
@@ -1310,7 +1310,7 @@ export const Candidates = () => {
                             <CheckCircle2 className="w-4 h-4 text-green-500" />
                           )}
                         </div>
-                        <p className="text-xs text-slate-400 mt-1">
+                        <p className="text-xs text-slate-500 mt-1">
                           {dup.duplicates.length} match(es)
                         </p>
                         {bulkDecisions[idx]?.action && (
@@ -1341,23 +1341,23 @@ export const Candidates = () => {
                         </CardHeader>
                         <CardContent className="space-y-3">
                           <div>
-                            <Label className="text-xs text-slate-500">File</Label>
+                            <Label className="text-xs text-slate-600">File</Label>
                             <p className="text-sm font-medium">{bulkDuplicates[selectedBulkIndex].file.name}</p>
                           </div>
                           <div>
-                            <Label className="text-xs text-slate-500">Extracted Name</Label>
+                            <Label className="text-xs text-slate-600">Extracted Name</Label>
                             <p className="text-sm font-medium">{bulkDuplicates[selectedBulkIndex].extractedInfo?.name || '-'}</p>
                           </div>
                           <div>
-                            <Label className="text-xs text-slate-500">Extracted Email</Label>
+                            <Label className="text-xs text-slate-600">Extracted Email</Label>
                             <p className="text-sm font-medium">{bulkDuplicates[selectedBulkIndex].extractedInfo?.email || '-'}</p>
                           </div>
                           <div>
-                            <Label className="text-xs text-slate-500">Extracted Phone</Label>
+                            <Label className="text-xs text-slate-600">Extracted Phone</Label>
                             <p className="text-sm font-medium">{bulkDuplicates[selectedBulkIndex].extractedInfo?.phone || '-'}</p>
                           </div>
                           <div>
-                            <Label className="text-xs text-slate-500">Evidence Detected</Label>
+                            <Label className="text-xs text-slate-600">Evidence Detected</Label>
                             <div className="flex flex-wrap gap-1 mt-1">
                               {bulkDuplicates[selectedBulkIndex].evidence_preview?.map((ev, i) => (
                                 <span key={i} className={`text-xs px-2 py-0.5 rounded-full ${getEvidenceColor(ev.type)}`}>
@@ -1395,8 +1395,8 @@ export const Candidates = () => {
                                 }}
                               >
                                 <p className="font-medium text-sm">{match.candidate_name}</p>
-                                <p className="text-xs text-slate-500">{match.candidate_email}</p>
-                                {match.candidate_phone && <p className="text-xs text-slate-400">{match.candidate_phone}</p>}
+                                <p className="text-xs text-slate-600">{match.candidate_email}</p>
+                                {match.candidate_phone && <p className="text-xs text-slate-500">{match.candidate_phone}</p>}
                                 <div className="flex gap-1 mt-2">
                                   {match.match_reasons?.map((reason, i) => (
                                     <span key={i} className={`text-xs px-2 py-0.5 rounded-full ${
@@ -1463,7 +1463,7 @@ export const Candidates = () => {
                         </Button>
                       </div>
                       {(bulkDecisions[selectedBulkIndex]?.action === 'merge' || bulkDecisions[selectedBulkIndex]?.action === 'replace') && (
-                        <p className="text-xs text-slate-500 mt-2">
+                        <p className="text-xs text-slate-600 mt-2">
                           Click on an existing candidate above to select the target for {bulkDecisions[selectedBulkIndex]?.action}
                         </p>
                       )}
@@ -1475,7 +1475,7 @@ export const Candidates = () => {
 
             <DialogFooter className="border-t border-slate-200 pt-4">
               <div className="flex items-center justify-between w-full">
-                <span className="text-sm text-slate-500">
+                <span className="text-sm text-slate-600">
                   {Object.values(bulkDecisions).filter(d => d?.action).length} of {bulkDuplicates.length} decisions made
                 </span>
                 <div className="flex gap-2">
@@ -1548,7 +1548,7 @@ export const Candidates = () => {
                           </div>
                           <div className="flex-1">
                             <p className="font-medium text-sm">{match.candidate_name}</p>
-                            <p className="text-xs text-slate-500">{match.candidate_email}</p>
+                            <p className="text-xs text-slate-600">{match.candidate_email}</p>
                           </div>
                           <div className="flex flex-wrap gap-1">
                             {match.match_reasons?.map((reason, i) => (
@@ -1657,7 +1657,7 @@ export const Candidates = () => {
                   </Select>
                 )}
                 {addTagLayer === 4 && tagLibrary?.layers?.[4]?.definitions && (
-                  <div className="mt-2 text-xs text-slate-500 space-y-1">
+                  <div className="mt-2 text-xs text-slate-600 space-y-1">
                     <p><strong>OPERATIONAL:</strong> {tagLibrary.layers[4].definitions.OPERATIONAL}</p>
                     <p><strong>TACTICAL:</strong> {tagLibrary.layers[4].definitions.TACTICAL}</p>
                     <p><strong>STRATEGIC:</strong> {tagLibrary.layers[4].definitions.STRATEGIC}</p>
