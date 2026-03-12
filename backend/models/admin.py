@@ -18,10 +18,6 @@ class AdminTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     username: str
-    total_jobs: int
-    total_candidates: int
-    total_analyses: int
-    total_credits_distributed: float
 
 class CreditTopupRequest(BaseModel):
     amount: float
