@@ -1,7 +1,7 @@
 # HR Assessment Platform — Product Roadmap
-> **Version:** 2.1  
+> **Version:** 2.2  
 > **Last Updated:** March 2026  
-> **Status:** Active — Phase 1 IN PROGRESS  
+> **Status:** Active — Phase 1 COMPLETE (including Task 9 Refactor)  
 > **Owner:** Solo Founder (AI-assisted: Cursor/Windsurf, Claude, NotebookLM)
 
 ---
@@ -12,7 +12,7 @@ Platform all-in-one HR Assessment yang menggabungkan **Evidence Screening** (CV,
 
 **Primary Target:** BUMN, Instansi Pemerintah, Corporate University (Corpu)  
 **Primary Use Case:** Internal assessment & promotion (bukan hiring eksternal)  
-**Business Model:** Subscription (feature access) + Credits (per API consumption)
+**Business Model:** Credits per assessment session + masa aktif akun per company
 
 ---
 
@@ -108,11 +108,19 @@ Roleplay Simulation       ─┘   (per individu)       (vs standar)    (AI + Hu
 ### Billing Model
 
 ```
-SUBSCRIPTION  →  Unlock fitur platform (freemium tiers)
-CREDITS       →  Dikonsumsi per API call:
-                   - 1 Evidence Analysis  = X credits
-                   - 1 Roleplay Session   = Y credits
-                   - Report generation    = gratis (sudah subscribe)
+CREDITS       →  Dikonsumsi per assessment session:
+                   - 1 Evidence Analysis    = 10 credits
+                   - 1 Roleplay Session     = 25 credits
+                   - 1 Competency Scoring   = 5 credits
+                   - Dashboard & report     = gratis
+
+MASA AKTIF    →  Di-set oleh Super Admin saat onboarding company
+                   - Credits habis  → assessment locked, report tetap bisa akses
+                   - Expired        → seluruh akses locked
+
+PRICING       →  Ditentukan per deal (bukan self-serve)
+                   Top up via Super Admin panel
+                   Angka credits baseline editable via admin settings
 ```
 
 ---
@@ -141,8 +149,6 @@ CREDITS       →  Dikonsumsi per API call:
 - Framework PLN/Astra (Hard Skill + Soft Skill, Golongan 1-6) jadi template bawaan
 - Corpu yang sudah punya framework sendiri bisa import/customize
 
-**Rationale:** Skala 1-5 adalah standar yang sudah familiar di BUMN/enterprise. Flexibility customize adalah keharusan karena tiap Corpu punya standar sendiri.
-
 ---
 
 ### D3 — Score Unification ✅
@@ -150,9 +156,9 @@ CREDITS       →  Dikonsumsi per API call:
 **Detail:**
 - Evidence relevance % → dinormalisasi ke skor kompetensi
 - Roleplay dimensi 1-5 → dinormalisasi ke skor kompetensi
-- System punya default weight yang sensible (roleplay lebih berat dari evidence untuk assessment behavioral)
+- System punya default weight yang sensible (roleplay lebih berat untuk behavioral)
 - HR bisa override bobot per posisi sesuai kebutuhan
-- Output ke user: **angka** (competency score) + **narasi** (AI-generated analysis)
+- Output: angka (competency score) + narasi (AI-generated)
 
 ---
 
@@ -161,36 +167,8 @@ CREDITS       →  Dikonsumsi per API call:
 **Detail:**
 - Partner (Elwyn/Skillana) adalah implementasi pertama di balik abstraction layer
 - White-label: tidak ada nama partner yang muncul di appmu
-- Interface input/output didefinisikan dari perspektif appmu
 - Bisa mock data selama API partner belum ready
-- Kalau partner berubah/pivot, hanya mapping layer yang perlu di-update
-
-**Input ke partner (abstracted):**
-```json
-{
-  "persona_config": {},
-  "scenario_config": {},
-  "rubric_config": {},
-  "candidate_id": "",
-  "session_metadata": {}
-}
-```
-
-**Output dari partner (abstracted):**
-```json
-{
-  "overall_score_percent": 0,
-  "rubric_total": 0,
-  "per_dimension_scores": [],
-  "per_dimension_analysis": [],
-  "improvements": [],
-  "transcript": [],
-  "quest_progress": {},
-  "knowledge_areas": []
-}
-```
-
-**Risk:** Partner (Elwyn) built for enterprise clients (HSBC level). Ada signal mereka kehilangan klien besar karena klien build sendiri. Monitor tapi tidak blocking — same ecosystem, same owner.
+- Kalau partner berubah, hanya mapping layer yang perlu di-update
 
 ---
 
@@ -198,62 +176,70 @@ CREDITS       →  Dikonsumsi per API call:
 **Keputusan:** AI recommend, human decide — selalu, tanpa exception  
 **Prinsip:**
 - AI tidak pernah "memutuskan" — AI "merekomendasikan dengan reasoning"
-- HR / Manager selalu punya final say
 - Override harus disertai alasan (untuk audit trail)
 - Framing di seluruh UI: *"Rekomendasi AI"* bukan *"Keputusan sistem"*
-
-**Rationale:** BUMN sensitif terhadap akuntabilitas dan compliance. Audit trail harus menunjukkan keputusan dibuat oleh manusia.
 
 ---
 
 ### D6 — Billing Model ✅
-**Keputusan:** Subscription + Credits  
+**Keputusan:** Credits only — tidak ada subscription tier  
 **Detail:**
-- Subscription: unlock fitur platform, freemium tiers
-- Credits: dikonsumsi per API consumption (evidence analysis + roleplay session)
-- Dashboard, report viewing, setup: covered oleh subscription
-- Data isolated per company (multi-tenant)
+- Credits dikonsumsi per assessment action (bukan per fitur/bulan)
+- Masa aktif akun di-set saat Super Admin onboard company
+- Credits habis → assessment locked, dashboard/report tetap bisa akses
+- Masa aktif expired → seluruh akses locked
+- Credits per-user untuk MVP, company pool di post-MVP
+- Top up dan onboarding via Super Admin panel — tidak ada self-serve
+- Harga per credit ditentukan per deal
+
+**Rationale:** BUMN budgeting tahunan, butuh angka pasti untuk PO. Model "X karyawan × Y credits = total budget" lebih mudah dijual daripada variable token cost.
 
 ---
 
 ### D7 — Database Architecture ✅
 **Keputusan:** Clean slate — collections baru, collections lama di-deprecate  
-**Rationale:** Evidence screener belum ada paying user dengan data historis kritis. Clean slate lebih aman dan tidak ada risiko merusak data curated user existing.
-
 **Deprecation mapping:**
 - `jobs` → diganti `positions`
 - `candidates` → diganti `employees`
 - `analyses` → diganti `assessment_sessions` + `competency_profiles`
 
 **Separation of concerns (intentional):**
-- `competency_profiles` → murni data objektif AI (scores, raw data, narrative)
+- `competency_profiles` → murni data objektif AI
 - `assessment_sessions` → metadata operasional + keputusan subjektif HR
+
+---
+
+### D8 — Company Onboarding ✅
+**Keputusan:** Admin-managed — tidak ada self-service onboarding  
+**Detail:**
+- Super Admin create company via `/api/admin/companies`
+- Self-service routes (`POST/PUT /api/company`) di-disable, return 410 Gone
+- `GET /api/company` tetap aktif untuk display purposes
+- `company_id` selalu diambil dari JWT token, bukan dari request params
+
+**Rationale:** BUMN/Corpu tidak self-serve onboard. Sales motion adalah demo → deal → vendor setup. Self-service juga membuka security gap.
 
 ---
 
 ## 4. Database Schema
 
 > Approved — Phase 1 implementation reference  
-> Semua collections wajib punya `company_id` (multi-tenancy constraint, bukan fitur)
+> Semua collections wajib punya `company_id` (multi-tenancy constraint)
 
 ### Master Data Collections
 
 #### `competency_library`
-Kamus/pustaka kompetensi standar. Template bawaan dari framework PLN/Astra.
-
 ```
 _id / competency_id
 company_id          (string) — mandatory
-name                (string) e.g. "Analytical Thinking"
+name                (string)
 description         (string)
 type                (enum: 'hard_skill' | 'soft_skill')
-levels              (array[5]) — deskripsi behavioral per skor 1-5
+levels              (array[5] of CompetencyLevel) — {score: 1-5, description: str}
 created_at / updated_at
 ```
 
 #### `positions`
-Menggantikan `jobs`. Standar peran di perusahaan, bukan lowongan.
-
 ```
 _id / position_id
 company_id          (string) — mandatory
@@ -262,60 +248,52 @@ department / divisi (string)
 level / golongan    (int: 1-6)
 required_competencies (array):
   - competency_id   (ref → competency_library)
-  - rubric_id       (ref → evaluation_rubrics) — reusable
+  - rubric_id       (ref → evaluation_rubrics) — nullable, reusable
   - standard_minimum (int: 1-5)
-  - weight_evidence  (int: %)
-  - weight_roleplay  (int: %)
+  - weight_evidence  (int: %) — default 50
+  - weight_roleplay  (int: %) — default 50
 created_at / updated_at
 ```
 
-#### `evaluation_rubrics`
-Aturan mapping dari Assessment Engine → Competency Library.  
-**Reusable lintas posisi** — satu rubrik CARE bisa dipakai di banyak posisi.
+> ⚠️ `rubric_id` dan bobot 50/50 adalah placeholder. Direvisit di Phase 2 Task 5.
 
+#### `evaluation_rubrics`
 ```
 _id / rubric_id
 company_id          (string) — mandatory
-name                (string) e.g. "Standard Frontliner Roleplay Rubric"
+name                (string)
 evidence_mapping    (array) — mapping category_scores → competency_id
-                             (hardcoded Phase 1, akan jadi dinamis Phase 2)
 roleplay_mapping    (array) — mapping dimensi Elwyn → competency_id
 created_at / updated_at
 ```
 
-> ⚠️ **Note untuk engineer:** `evidence_mapping` yang di-hardcode di Phase 1 harus disimpan sebagai config terpisah (bukan embedded dalam function) agar mudah di-replace di Phase 2 tanpa refactor besar.
-
 ### Transactional & User Collections
 
 #### `employees`
-Menggantikan `candidates`. Entitas orang yang persisten lintas sesi.
-
 ```
 _id / person_id
 company_id          (string) — mandatory
-name                (string)
-email               (string)
+name, email         (string)
 current_position    (string)
-employment_type     (enum: 'internal' | 'external') — default: internal
+employment_type     (enum: 'internal' | 'external')
 status              (string: 'aktif' | 'non-aktif')
 ```
 
 #### `assessment_sessions`
-Jantung dari state machine + human review layer.
-
+State machine heart — status transitions:
 ```
-_id / session_id
-company_id          (string) — mandatory
-person_id           (ref → employees)
-target_position_id  (ref → positions)
+pending → in_progress → completed → pending_review
+                                  → approved
+                                  → overridden       (override_reason WAJIB)
+                                  → request_more_info → kembali ke pending_review
+```
+
+Fields:
+```
+_id / session_id, company_id, person_id, target_position_id
 purpose             (enum: 'promotion' | 'hiring')
-status              (enum — state machine):
-                      pending → in_progress → completed
-                      → pending_review
-                      → approved | overridden | request_more_info
-                      (request_more_info → kembali ke pending_review)
-reviewer_id         (ref → users)
-reviewer_notes      (string)
+status              (enum: 7 states di atas)
+reviewer_id, reviewer_notes
 ai_recommendation   (enum: 'promote' | 'hire' | 'not_yet' | 'no')
 override_reason     (string) — WAJIB jika final_outcome ≠ ai_recommendation
 final_outcome       (enum: 'promoted' | 'hired' | 'not_yet' | 'no')
@@ -323,20 +301,27 @@ credits_consumed    (int)
 created_at / decided_at
 ```
 
-> ⚠️ **State machine lay out di Phase 1 (schema level). UI review baru di Phase 3.**
-
 #### `competency_profiles`
-Menggantikan `analyses`. Murni hasil objektif AI — terpisah dari keputusan HR.
-
 ```
 _id / profile_id
-session_id          (ref → assessment_sessions)
-person_id           (ref → employees)
-company_id          (string) — mandatory
-competency_scores   (array) — skor normalisasi per competency_id (1-5 + %)
+session_id, person_id, company_id
+competency_scores   (array) — normalized per competency_id (1-5 + %)
 raw_evidence        (object) — JSON mentah dari Evidence Screener
 raw_roleplay        (object) — JSON mentah dari Roleplay API
 narrative           (object) — AI output: strengths, gaps, summary
+```
+
+### Credit System
+
+```
+Credit rates (editable via admin_settings, default):
+  evidence_analysis   = 2.0x multiplier  (= 10 credits baseline)
+  roleplay_session    = 5.0x multiplier  (= 25 credits baseline)
+  competency_scoring  = 1.5x multiplier  (= 5 credits baseline)
+
+Enforcement:
+  check_user_credits() → cek expiry dulu (403), lalu cek balance (402)
+  deduct_credits()     → log ke credit_usage_logs dengan token detail
 ```
 
 ---
@@ -351,78 +336,115 @@ narrative           (object) — AI output: strengths, gaps, summary
 
 | # | Task | Status |
 |---|---|---|
-| 1 | Jawab Open Decisions D1-D6 | ✅ Done |
-| 2 | Audit Evidence Screener output | ✅ Done — output JSON terdokumentasi |
-| 3 | Define database schema Phase 1 | ✅ Done — approved, lihat Section 4 |
-| 4 | Gap analysis: As-Is vs To-Be | ✅ Done — engineer reviewed & approved |
-| 5 | Validasi framework ke paying user | 🔄 Ongoing — desk research |
-| 6 | Review Roleplay API (Elwyn) | 🔄 Partial — API belum ready, analisa dari web-app |
+| 1 | Jawab Open Decisions D1-D8 | ✅ Done |
+| 2 | Audit Evidence Screener output | ✅ Done |
+| 3 | Define database schema Phase 1 | ✅ Done |
+| 4 | Gap analysis: As-Is vs To-Be | ✅ Done |
+| 5 | Validasi framework ke paying user | 🔄 Ongoing |
+| 6 | Review Roleplay API (Elwyn) | 🔄 Partial — API belum ready |
 
 ---
 
-### Phase 1 — Foundation Layer 🟡 IN PROGRESS
+### Phase 1 — Foundation Layer ✅ COMPLETED
+*Commit: `b9458df` — pushed ke GitHub*
 
-*Setup system — dikerjakan HR sekali, jadi backbone semua engine*
+| # | Task | Status |
+|---|---|---|
+| 1 | Setup database schema | ✅ Done |
+| 2 | Competency Library CRUD | ✅ Done |
+| 3 | Template posisi bawaan (PLN/Astra seed) | ✅ Done |
+| 4 | Position Builder CRUD | ✅ Done |
+| 5 | Evaluation Rubrics Builder | ✅ Done |
+| 6 | User roles & permissions (RBAC) | ✅ Done |
+| 7 | Multi-tenant setup & company isolation | ✅ Done |
+| 8 | Subscription + Credits infrastructure | ✅ Done |
 
-| # | Task | Subtasks | Dependencies |
-|---|---|---|---|
-| 1 | **Setup database schema** | Buat collections baru · Deprecate collections lama · Pastikan company_id mandatory di semua collections | D7 |
-| 2 | **Competency Library (CRUD)** | Buat/edit/hapus kompetensi · Seed template PLN/Astra · Field levels[1-5] per kompetensi | Task 1 |
-| 3 | **Template posisi bawaan** | Digitalisasi posisi dari framework PLN/Astra · List kompetensi default + golongan 1-6 | D2, Task 2 |
-| 4 | **Position Builder** | HR create/edit posisi · Assign kompetensi + rubrik · Set standard_minimum + bobot per kompetensi | Task 2, 3 |
-| 5 | **Evaluation Rubrics Builder** | HR buat/edit rubrik (CARE, dll) · Deskripsi 1-5 per dimensi · evidence_mapping hardcoded sebagai config · roleplay_mapping | Task 2 |
-| 6 | **User roles & permissions** | HR Admin · Manager · Owner/C-Level · Karyawan/Kandidat | Task 1 |
-| 7 | **Multi-tenant setup** | Data isolation per company · Company onboarding flow | Task 1, 6 |
-| 8 | **Subscription + Credits infra** | Tier management · Credit balance · Consumption tracking per API call | D6 — define freemium tiers dulu |
+---
+
+### Task 9 — Codebase Refactor 🟡 NEXT
+*Dikerjakan sebelum Phase 2 dimulai*
+
+**Problem:** `server.py` sudah 5,400+ baris (God File anti-pattern). Kalau Phase 2 ditambahkan ke struktur yang sama, file akan mencapai 7,000-8,000+ baris dan menjadi sangat sulit di-maintain, bahkan untuk AI engineer.
+
+**Target struktur:**
+```
+backend/
+├── server.py          # App factory + startup only (~100 lines)
+├── models/
+│   ├── user.py
+│   ├── company.py
+│   ├── competency.py
+│   ├── position.py
+│   ├── rubric.py
+│   └── legacy.py      # deprecated models
+├── routes/
+│   ├── auth.py
+│   ├── admin.py
+│   ├── competency.py
+│   ├── position.py
+│   ├── rubric.py
+│   └── legacy.py      # deprecated routes
+├── services/
+│   ├── ai_service.py
+│   ├── credit.py
+│   └── evidence.py
+├── auth/
+│   ├── dependencies.py  # get_current_user, RequireRole, get_company_id
+│   └── admin.py
+└── config.py
+```
+
+**Verification wajib setelah refactor:**
+- Semua existing tests pass
+- Server mount tanpa error
+- Semua Phase 1 endpoints masih berjalan normal
+- Tidak ada perubahan behavior — pure structural refactor
 
 ---
 
 ### Phase 2 — Engine Integration
-
-*Evidence + Roleplay berjalan di dalam platform*
+*Dimulai setelah Task 9 selesai*
 
 | # | Task | Subtasks | Dependencies |
 |---|---|---|---|
-| 1 | **Refactor Evidence Screener — Tahap 1** | AI tetap output category_scores · Tambah mapping layer di backend (config, bukan hardcode dalam function) · Map ke competency_id | Phase 1, D3 |
-| 2 | **Roleplay abstraction layer** | Define interface (input/output) · Mock data untuk development · Connect ke Elwyn API ketika ready | D4 — API Elwyn belum ready |
-| 3 | **Assessment session management** | HR trigger sesi · Karyawan/kandidat terima notif + link · State machine transitions | Phase 1, Task 1 schema |
-| 4 | **Evidence input expansion** | CV (existing) · Psikotes report · Interview notes · Knowledge test builder | Task 1 |
-| 5 | **Score normalization layer** | Evidence % → normalized competency score · Roleplay 1-5 → normalized · Blended dengan bobot D3 | D3, Task 1, 2 |
-| 6 | **Promotion flow end-to-end** | HR pilih karyawan → assign assessment → complete → output rekomendasi | Semua task Phase 2 |
-| 7 | **Hiring flow end-to-end** | Job posting → kandidat submit → assessment → output | Task 6 |
-| 8 | **Refactor Evidence Screener — Tahap 2** | Upgrade prompt AI dengan referensi competency_library · Output lebih structured | Task 1, setelah master data stabil |
+| 1 | **Refactor Evidence Screener — Tahap 1** | Map category_scores → competency_id via config layer | Phase 1, D3 |
+| 2 | **Roleplay abstraction layer** | Define interface · Mock data · Connect Elwyn API ketika ready | D4 |
+| 3 | **Assessment session management** | HR trigger sesi · State machine transitions · Notifikasi | Phase 1 |
+| 4 | **Evidence input expansion** | CV · Psikotes report · Interview notes · Knowledge test | Task 1 |
+| 5 | **Score normalization layer** | Evidence % → normalized · Roleplay 1-5 → normalized · Blended score | D3, Task 1, 2 |
+| 6 | **Promotion flow end-to-end** | HR pilih karyawan → assign → complete → output rekomendasi | Semua task Phase 2 |
+| 7 | **Hiring flow end-to-end** | Job posting → submit → assessment → output | Task 6 |
+| 8 | **Refactor Evidence Screener — Tahap 2** | Upgrade prompt dengan competency_library context | Setelah master data stabil |
 
 ---
 
 ### Phase 3 — Intelligence Layer
 
-*Platform "berpikir" — gap analysis, decision support, dashboard*
-
 | # | Task | Subtasks | Dependencies |
 |---|---|---|---|
-| 1 | **Competency Aggregator** | Hitung competency score per individu · Gap vs standar posisi · Gap magnitude | Phase 2 |
-| 2 | **AI Narrative Generator** | Overall summary · Key strengths · Development areas · Recommendations | Task 1 |
-| 3 | **Human Review Layer UI** | Reviewer notes · Approve / override flow · Override wajib isi alasan · Audit trail display | D5, state machine dari Phase 1 |
-| 4 | **Decision Support output** | "Layak promote/hire?" + confidence · Framing: rekomendasi bukan keputusan · Final outcome oleh manusia | Task 2, 3 |
-| 5 | **Individual Competency Profile page** | Visual/radar chart per kompetensi · Perbandingan vs standar · History sessions (list) | Task 1-4 |
-| 6 | **HR Dashboard** | Pipeline assessment aktif · Status per individu · Export PDF/Excel | Task 5 |
-| 7 | **C-Level Dashboard** | Company-wide competency overview · Gap per divisi · View-only | Task 6 |
-| 8 | **Notification & workflow** | Email/in-app per stage · Manager approval reminder | Task 3 |
+| 1 | **Competency Aggregator** | Score per individu · Gap vs standar · Gap magnitude | Phase 2 |
+| 2 | **AI Narrative Generator** | Summary · Strengths · Development areas · Recommendations | Task 1 |
+| 3 | **Human Review Layer UI** | Approve / override · Override wajib isi alasan · Audit trail | D5 |
+| 4 | **Decision Support output** | Rekomendasi + confidence · Framing: AI recommend, human decide | Task 2, 3 |
+| 5 | **Individual Competency Profile page** | Radar chart · Perbandingan vs standar · History sessions | Task 1-4 |
+| 6 | **HR Dashboard** | Pipeline aktif · Status per individu · Export PDF/Excel | Task 5 |
+| 7 | **C-Level Dashboard** | Company-wide overview · Gap per divisi · View-only | Task 6 |
+| 8 | **Notification & workflow** | Email/in-app per stage · Approval reminder | Task 3 |
 
 ---
 
 ### Phase 4 — Post-MVP Enhancements
-
-*Dikerjakan setelah paying user pakai dan feedback masuk. Jangan di-build sebelum ada signal dari user.*
+*Dikerjakan setelah paying user pakai dan feedback masuk.*
 
 | # | Enhancement | Trigger |
 |---|---|---|
-| 1 | Longitudinal progress visualization | User request setelah pakai |
+| 1 | Longitudinal progress visualization | User request |
 | 2 | Training/development recommendation engine | Feedback dari Corpu |
 | 3 | Bulk import karyawan | Enterprise onboarding need |
-| 4 | Roleplay engine alternatif / in-house | Jika partner risk terealisasi |
-| 5 | Hiring flow polish (untuk swasta) | Jika segment swasta mulai convert |
-| 6 | Analytics & ROI reporting untuk Corpu | Corpu butuh buktikan value ke manajemen |
+| 4 | Company-pooled credits (migrasi dari per-user) | Scale need |
+| 5 | Roleplay engine alternatif / in-house | Jika partner risk terealisasi |
+| 6 | Hiring flow polish (untuk swasta) | Jika segment swasta convert |
+| 7 | Analytics & ROI reporting untuk Corpu | Corpu butuh buktikan value |
 
 ---
 
@@ -430,11 +452,12 @@ narrative           (object) — AI output: strengths, gaps, summary
 
 | Level | Risiko | Mitigasi |
 |---|---|---|
-| 🔴 Critical | Build fitur yang tidak dibutuhkan paying user | Validate dulu sebelum Phase 1 selesai |
-| 🟡 Medium | Partner API (Elwyn) belum ready saat Phase 2 | Abstraction layer + mock data — tidak perlu nunggu |
-| 🟡 Medium | Enterprise client Elwyn build sendiri (HSBC case) | Same ecosystem mitigates. Abstraction layer protects jangka panjang |
-| 🟡 Medium | Competency framework terlalu complex untuk user | "Gamau ribet" sebagai design principle — defaults sensible |
-| 🟡 Medium | evidence_mapping hardcode jadi sulit di-replace | Simpan sebagai config file terpisah, bukan embedded dalam function |
+| 🔴 Critical | Build fitur yang tidak dibutuhkan paying user | Validate sebelum Phase 2 dimulai |
+| 🟡 Medium | Partner API (Elwyn) belum ready saat Phase 2 | Abstraction layer + mock data |
+| 🟡 Medium | Enterprise client Elwyn build sendiri | Same ecosystem mitigates. Abstraction layer protects |
+| 🟡 Medium | Competency framework terlalu complex | "Gamau ribet" sebagai design principle |
+| 🟡 Medium | server.py God File makin besar | Task 9 refactor sebelum Phase 2 — tidak boleh di-skip |
+| 🟡 Medium | Credits per-user confusing (HR Admin 3 punya 0 credits) | Document sebagai best practice onboarding: distribute credits ke semua HR Admin saat setup |
 | 🟢 Low | Solo founder bottleneck | AI tools aggressively. Ship MVP dulu, iterate. |
 
 ---
@@ -444,10 +467,10 @@ narrative           (object) — AI output: strengths, gaps, summary
 | # | Item | Priority | Notes |
 |---|---|---|---|
 | 1 | Elwyn API documentation — kapan ready? | 🔴 High | Blocking untuk Phase 2 Task 2 |
-| 2 | Validasi skala 1-5 secara eksplisit dengan paying user | 🔴 High | Desk research bisa substitute sementara |
-| 3 | Default weight evidence vs roleplay (D3) — berapa angkanya? | 🟡 Medium | Perlu definisi sebelum Phase 2 Task 5 |
-| 4 | Freemium tier — fitur apa yang free vs paid? | 🟡 Medium | Perlu definisi sebelum Phase 1 Task 8 |
-| 5 | Volume hiring eksternal vs promotion di target BUMN | 🟡 Medium | Affects feature prioritization Phase 2 |
+| 2 | Validasi skala 1-5 dengan paying user | 🔴 High | Desk research bisa substitute sementara |
+| 3 | Default weight evidence vs roleplay (D3) — angka pastinya? | 🟡 Medium | Perlu sebelum Phase 2 Task 5 |
+| 4 | Volume hiring eksternal vs promotion di target BUMN | 🟡 Medium | Affects Phase 2 prioritization |
+| 5 | docs/ERD.md — update ke schema Phase 1 | 🟡 Medium | Dikerjakan saat Task 9 refactor |
 
 ---
 

@@ -82,3 +82,6 @@ agenthub/agents/youtube/db
 
 # Docker
 mongo_data/
+
+*.log
+test_reports/
