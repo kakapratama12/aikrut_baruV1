@@ -62,9 +62,33 @@ class AssessmentStatus(str, Enum):
     overridden = "overridden"
     request_more_info = "request_more_info"
 
+class BatchStatus(str, Enum):
+    open = "open"
+    in_progress = "in_progress"
+    closed = "closed"
+    decided = "decided"
+
 class AssessmentPurpose(str, Enum):
     promotion = "promotion"
     hiring = "hiring"
+
+class AssessmentBatchCreate(BaseModel):
+    company_id: str
+    target_position_id: str
+    purpose: AssessmentPurpose
+    notes: Optional[str] = None
+
+from datetime import datetime, timezone
+class AssessmentBatch(AssessmentBatchCreate):
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    status: BatchStatus = BatchStatus.open
+    session_ids: List[str] = []
+    created_by: str
+    created_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+    )
+    closed_at: Optional[str] = None
+    decided_at: Optional[str] = None
 
 class AIRecommendation(str, Enum):
     promote = "promote"
@@ -82,6 +106,7 @@ class AssessmentSessionCreate(BaseModel):
     company_id: str
     person_id: str
     target_position_id: str
+    batch_id: Optional[str] = None
     purpose: AssessmentPurpose
 
 class AssessmentSession(AssessmentSessionCreate):
