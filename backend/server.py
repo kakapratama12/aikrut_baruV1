@@ -89,7 +89,7 @@ api_router.include_router(candidates.router)
 api_router.include_router(analysis.router)
 api_router.include_router(settings.router)
 api_router.include_router(dashboard.router)
-api_router.include_router(assessment.router)
+api_router.include_router(assessment.router, prefix="/assessment", tags=["Assessment"])
 api_router.include_router(employees.router, prefix="/employees", tags=["Employees"])
 
 app.include_router(api_router)
