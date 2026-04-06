@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from backend.config import db
 from backend.auth.dependencies import get_current_user, get_company_id, RequireRole
 from backend.models.user import UserRole
-from backend.models.employee import Employee, EmployeeCreate, EmployeeUpdate
+from backend.models.employee import Employee, EmployeeCreate, EmployeeUpdate, EmployeeBulkCreate, EmployeeBulkResponse
 
 router = APIRouter()
 
@@ -36,6 +36,43 @@ async def create_employee(
     
     await db.employees.insert_one(new_employee.model_dump())
     return new_employee.model_dump()
+
+@router.post("/bulk")
+async def bulk_create_employees(
+    bulk_req: EmployeeBulkCreate,
+    company_id: str = Depends(get_company_id),
+    current_user: dict = Depends(RequireRole([UserRole.hr_admin]))
+):
+    """Bulk input employees. Used heavily for hiring external candidates."""
+    created_list = []
+    existing_list = []
+    
+    for emp_data in bulk_req.employees:
+        emp_data.company_id = company_id
+        
+        existing = await db.employees.find_one({
+            "email": emp_data.email,
+            "company_id": company_id
+        }, {"_id": 0})
+        
+        if existing:
+            existing_list.append(existing)
+        else:
+            new_employee = Employee(
+                **emp_data.model_dump(),
+                created_at=datetime.now(timezone.utc).isoformat(),
+                updated_at=datetime.now(timezone.utc).isoformat()
+            )
+            created_list.append(new_employee.model_dump())
+            
+    if created_list:
+        await db.employees.insert_many(created_list)
+        
+    return {
+        "created": created_list,
+        "existing": existing_list,
+        "total": len(created_list) + len(existing_list)
+    }
 
 @router.get("")
 async def list_employees(

@@ -1211,7 +1211,8 @@ async def complete_session(
     # This will generate profile temporarily, but session isn't completed yet
     # We let transition handle the permanent generation so logic is centralized
     temp_profile = await compute_competency_profile(session_id, company_id)
-    rec_result = compute_overall_recommendation(temp_profile)
+    purpose = session.get("purpose", "promotion")
+    rec_result = compute_overall_recommendation(temp_profile, purpose=purpose)
     
     await db.assessment_sessions.update_one(
         {"id": session_id},
@@ -1238,6 +1239,18 @@ async def review_session(
 ):
     company_id = get_company_id(current_user)
     
+    session = await db.assessment_sessions.find_one({"id": session_id, "company_id": company_id})
+    if not session:
+        raise HTTPException(status_code=404, detail="Session not found")
+        
+    purpose = session.get("purpose", "promotion")
+    if purpose == "promotion":
+        if req.final_outcome not in ["promoted", "not_yet", "no"]:
+            raise HTTPException(status_code=400, detail=f"Invalid final_outcome '{req.final_outcome}' for promotion purpose")
+    elif purpose == "hiring":
+        if req.final_outcome not in ["hired", "not_yet", "no"]:
+            raise HTTPException(status_code=400, detail=f"Invalid final_outcome '{req.final_outcome}' for hiring purpose")
+            
     # Store outcome info first before validating transition so the validator 
     # has access to the newly requested outcome info
     await db.assessment_sessions.update_one(

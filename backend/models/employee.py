@@ -26,3 +26,11 @@ class EmployeeUpdate(BaseModel):
     current_position: Optional[str] = None
     employment_type: Optional[EmploymentType] = None
     status: Optional[str] = None
+
+class EmployeeBulkCreate(BaseModel):
+    employees: list[EmployeeCreate]
+
+class EmployeeBulkResponse(BaseModel):
+    created: list[Employee]
+    existing: list[Employee]
+    total: int

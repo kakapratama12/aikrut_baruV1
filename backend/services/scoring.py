@@ -163,7 +163,7 @@ async def compute_competency_profile(
     return results
 
 
-def compute_overall_recommendation(competency_scores: list) -> dict:
+def compute_overall_recommendation(competency_scores: list, purpose: str = "promotion") -> dict:
     if not competency_scores:
         return {"recommendation": "no", "confidence": "low"}
 
@@ -171,10 +171,13 @@ def compute_overall_recommendation(competency_scores: list) -> dict:
     total = len(competency_scores)
     pct = meets / total
 
+    # Label disesuaikan dengan purpose
+    positive = "promote" if purpose == "promotion" else "hire"
+
     if pct >= 0.8:
-        return {"recommendation": "promote", "confidence": "high"}
+        return {"recommendation": positive, "confidence": "high"}
     elif pct >= 0.6:
-        return {"recommendation": "promote", "confidence": "medium"}
+        return {"recommendation": positive, "confidence": "medium"}
     elif pct >= 0.4:
         return {"recommendation": "not_yet", "confidence": "medium"}
     else:
