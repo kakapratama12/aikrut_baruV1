@@ -6,7 +6,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi import _rate_limit_exceeded_handler
 
 from backend.config import db, limiter, create_indexes
-from backend.routes import auth, admin, company, jobs, candidates, analysis, settings, dashboard, assessment
+from backend.routes import auth, admin, company, jobs, candidates, analysis, settings, dashboard, assessment, employees
 
 # Create the main app
 app = FastAPI(title="Aikrut - Smart HR Assistant")
@@ -90,5 +90,6 @@ api_router.include_router(analysis.router)
 api_router.include_router(settings.router)
 api_router.include_router(dashboard.router)
 api_router.include_router(assessment.router)
+api_router.include_router(employees.router, prefix="/employees", tags=["Employees"])
 
 app.include_router(api_router)

@@ -19,3 +19,10 @@ class Employee(EmployeeCreate):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     created_at: str
     updated_at: str
+
+class EmployeeUpdate(BaseModel):
+    name: Optional[str] = None
+    email: Optional[str] = None
+    current_position: Optional[str] = None
+    employment_type: Optional[EmploymentType] = None
+    status: Optional[str] = None
